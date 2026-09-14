@@ -1,0 +1,12 @@
+{
+  "repository": "testrepo",
+  "reviewed_commit": "1b32fa402083c20ea05a47e6d3909303111beac8",
+  "local_links_checked": 6,
+  "preserved_archive_link_findings": 0,
+  "diagram_count": 0,
+  "modified_original_documents": [
+    "README.md"
+  ],
+  "checks": [],
+  "errors": []
+}
