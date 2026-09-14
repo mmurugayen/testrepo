@@ -17,3 +17,8 @@ Local contract tests are development evidence. Required CI, real PostgreSQL,
 collector wiring, installed clients and site-runbook verification remain release
 gates. Unknown failures stay unclassified; learned examples do not guarantee that
 every future issue can be fixed automatically.
+
+Validation commands, results, source hashes and remaining gates are in
+[the current validation record](../../OBSERVABILITY_VALIDATION.json).
+
+The [earlier PR #2 validation record](../../OBSERVABILITY_VALIDATION_PR2.json) is retained as historical evidence. Its four-file inventory predates the Java placeholder classification now included in the current source inventory.
