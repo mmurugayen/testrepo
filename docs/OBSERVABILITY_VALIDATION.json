@@ -1,0 +1,61 @@
+{
+  "feature": "GYS-OBS-001",
+  "product": "testrepo",
+  "date": "2026-09-14",
+  "upstream_base": "1b32fa402083c20ea05a47e6d3909303111beac8",
+  "status": "local_checks_passed_release_qualification_pending",
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_observability_mcp.py"
+      ],
+      "exit": 0,
+      "summary": "................\n----------------------------------------------------------------------\nRan 16 tests in 1.581s\n\nOK\n"
+    },
+    {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_operation_tracing.py"
+      ],
+      "exit": 0,
+      "summary": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.005s\n\nOK\n"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_observability_coverage.py"
+      ],
+      "exit": 0,
+      "summary": "{\"feature\": \"GYS-OBS-001\", \"product\": \"testrepo\", \"source_files\": 4, \"provenance\": \"matched\", \"status\": \"passed\"}\n"
+    }
+  ],
+  "source_sha256": {
+    "scripts/check_observability_coverage.py": "f1a3ae1247f049163b6e090c77e651811941f51abc99f96bb139e04654ef4ed1",
+    "scripts/gysam_diagnostic_contract.py": "4c94d6bbabed6306523ff3620e50ecbd2dc23d40f4fcf1119d60974c89caddbb",
+    "scripts/gysam_diagnostics.py": "dfd8e93f748c970a4c7914d31070b73e579d30b0356efbb2e4b347f3aaba377c",
+    "scripts/gysam_observability.py": "980183fe5fb2c624c666e5bf2892e8e36e3e31e68ec47aafa42f025e8d4e7d01",
+    "tests/test_observability_mcp.py": "4e8802169e02a736bd0c01379b0e46e0012f314c136836dac9bcbea19e6ad705",
+    "tests/test_operation_tracing.py": "071a47e456efb69da90511a31eb9753c1124559e844f9c48927841d5f45b5974"
+  },
+  "limitations": [
+    "Required GitHub CI and review remain pending.",
+    "Live collector paths, retention, credentials and deployed revisions must be configured and verified.",
+    "PostgreSQL/API migration and real recovery-handler postconditions require the site/CI environment.",
+    "Native Android/Windows builds and deployed client collection are not qualified by these checks."
+  ],
+  "production_qualified": false,
+  "runtime_scope": "No pre-existing executable product runtime; tested diagnostics/MCP foundation and backlog only."
+}

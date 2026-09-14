@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "feature": "GYS-OBS-001",
+  "product": "testrepo",
+  "measurement": "source inventory; boundary classifications require review, not statement coverage",
+  "excluded": [
+    "Tests and fixtures",
+    "Historical release snapshots",
+    "Verified dependency checkouts: wrappers attach after pin verification",
+    "Private/pure helper calls use the enclosing failure boundary",
+    "Operator-only build/deployment scripts retain their existing exit/output contract"
+  ],
+  "files": {
+    "scripts/check_observability_coverage.py": {
+      "boundary": "MCP protocol; no existing application runtime",
+      "direct_markers": []
+    },
+    "scripts/gysam_diagnostic_contract.py": {
+      "boundary": "MCP protocol; no existing application runtime",
+      "direct_markers": []
+    },
+    "scripts/gysam_diagnostics.py": {
+      "boundary": "MCP protocol; no existing application runtime",
+      "direct_markers": [
+        "log_context("
+      ]
+    },
+    "scripts/gysam_observability.py": {
+      "boundary": "MCP protocol; no existing application runtime",
+      "direct_markers": [
+        "class ObservabilityMCP"
+      ]
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "product": "testrepo",
+  "sources": [
+    {
+      "id": "runtime",
+      "path": "../logs/runtime.jsonl",
+      "services": []
+    }
+  ],
+  "backend": null,
+  "enable_recovery": false,
+  "targets": {}
+}
