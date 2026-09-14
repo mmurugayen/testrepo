@@ -1,67 +1,53 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1220" height="910" viewBox="0 0 1220 910" role="img" aria-labelledby="title desc">
-<title id="title">Utility diagnostics architecture</title>
-<desc id="desc">Platform diagnostics architecture. Components and ownership boundaries; connections are structural.</desc>
-<rect width="1220" height="910" fill="#f5f8fc"/>
-<text x="40" y="47" font-family="Arial, sans-serif" font-size="27" font-weight="700" fill="#23384d">Utility diagnostics architecture</text>
-<text x="40" y="79" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#236977">ARCHITECTURE / COMPONENTS AND CONNECTIONS</text>
-<text x="40" y="106" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">Source review: 14 September 2026 | GYS-OBS-001 | configured backend authority</text>
-<rect x="30" y="137" width="360" height="715" rx="15" fill="#eaf0f8" stroke="#c4d3df"/>
-<text x="46" y="163" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#23384d">Local evidence and MCP host</text>
-<rect x="430" y="137" width="360" height="715" rx="15" fill="#e5f2ee" stroke="#c4d3df"/>
-<text x="446" y="163" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#23384d">Diagnostic subprocess</text>
-<rect x="830" y="137" width="360" height="715" rx="15" fill="#eef0f6" stroke="#c4d3df"/>
-<text x="846" y="163" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#23384d">Separately configured HPC backend</text>
-<polyline points="370,255.0 450,255.0" fill="none" stroke="#376a80" stroke-width="2"/>
-<rect x="391.4" y="233.0" width="37.2" height="19" rx="3" fill="#f5f8fc"/>
-<text x="395.4" y="246.0" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#23384d">read</text>
-<polyline points="370,465.0 450,465.0" fill="none" stroke="#376a80" stroke-width="2"/>
-<rect x="388.0" y="443.0" width="44.0" height="19" rx="3" fill="#f5f8fc"/>
-<text x="392.0" y="456.0" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#23384d">stdio</text>
-<polyline points="370,675.0 450,465.0" fill="none" stroke="#376a80" stroke-width="2"/>
-<rect x="384.6" y="548.0" width="50.8" height="19" rx="3" fill="#f5f8fc"/>
-<text x="388.6" y="561.0" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#23384d">config</text>
-<polyline points="610.0,395 610.0,325" fill="none" stroke="#376a80" stroke-width="2"/>
-<polyline points="770,465.0 850,255.0" fill="none" stroke="#376a80" stroke-width="2"/>
-<rect x="788.0" y="338.0" width="44.0" height="19" rx="3" fill="#f5f8fc"/>
-<text x="792.0" y="351.0" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#23384d">HTTPS</text>
-<polyline points="1010.0,325 1010.0,395" fill="none" stroke="#376a80" stroke-width="2"/>
-<polyline points="1170,255.0 1182,255.0 1182,675.0 1170,675.0" fill="none" stroke="#376a80" stroke-width="2"/>
-<polyline points="610.0,535 610.0,605" fill="none" stroke="#376a80" stroke-width="2"/>
-<rect x="50" y="185" width="320" height="140" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
-<text x="68" y="214" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Protected JSONL logs</text>
-<text x="68" y="245" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Supervisor-owned capture / retention</text>
-<text x="68" y="265" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Revision and correlation IDs</text>
-<rect x="450" y="185" width="320" height="140" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
-<text x="468" y="214" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Bounded log reader</text>
-<text x="468" y="245" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Configured sources; sanitized events</text>
-<text x="468" y="265" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Missing evidence stays unknown</text>
-<rect x="850" y="185" width="320" height="140" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
-<text x="868" y="214" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">HPC diagnostic API</text>
-<text x="868" y="245" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Existing bearer session and roles</text>
-<text x="868" y="265" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Matching backend deployment</text>
-<rect x="50" y="395" width="320" height="140" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
-<text x="68" y="424" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Operator-selected MCP host</text>
-<text x="68" y="455" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Stdio JSON-RPC</text>
-<text x="68" y="475" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">No automatic collector installation</text>
-<rect x="450" y="395" width="320" height="140" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
-<text x="468" y="424" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Platform MCP adapter</text>
-<text x="468" y="455" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">scripts/gysam_observability.py</text>
-<text x="468" y="475" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Optional configured recovery tools</text>
-<rect x="850" y="395" width="320" height="140" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
-<text x="868" y="424" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">HPC automation service</text>
-<text x="868" y="455" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Independent plan approval</text>
-<text x="868" y="475" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Registered handlers; local plans</text>
-<rect x="50" y="605" width="320" height="140" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
-<text x="68" y="634" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Protected configuration</text>
-<text x="68" y="665" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Fixed origins, targets and credentials</text>
-<text x="68" y="685" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Recovery disabled unless configured</text>
-<rect x="450" y="605" width="320" height="140" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
-<text x="468" y="634" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Shared diagnostic contract</text>
-<text x="468" y="665" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Bounded IDs and fingerprints</text>
-<text x="468" y="685" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Messages and secrets excluded</text>
-<rect x="850" y="605" width="320" height="140" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
-<text x="868" y="634" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Resolution memory</text>
-<text x="868" y="665" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">PostgreSQL verified evidence</text>
-<text x="868" y="685" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Backend migration 017 required</text>
-<text x="40" y="878" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">Lines show structural dependencies; boxes identify components and their deployment boundary.</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="880" viewBox="0 0 1400 880" role="img" aria-labelledby="title desc">
+<title id="title">testrepo diagnostic utility architecture</title>
+<desc id="desc">testrepo diagnostic utility architecture. Nested cards identify components within process, storage, source and external boundaries. Lines denote structural associations, not action order.</desc>
+<rect width="1400" height="880" fill="#f5f8fc"/>
+<text x="40" y="46" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#23384d">testrepo diagnostic utility architecture</text>
+<text x="40" y="77" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#236977">ARCHITECTURE / DEPLOYMENT UNITS AND CONTAINED COMPONENTS</text>
+<text x="40" y="106" font-family="Arial, sans-serif" font-size="15" font-weight="400" fill="#23384d">Current implemented composition</text>
+<text x="40" y="132" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#496277">Source: mmurugayen/testrepo @ 89795c0961a9 | Reviewed 2026-09-14</text>
+<text x="40" y="158" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#496277">Solid association: runtime interface or data access. Dashed association: source/configuration dependency.</text>
+<polyline points="435,315.0 505,315.0" fill="none" stroke="#527085" stroke-width="2"/>
+<rect x="447.75" y="291.0" width="44.5" height="17" rx="3" fill="#f5f8fc"/>
+<text x="453.75" y="303.0" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#23384d">stdio</text>
+<polyline points="895,315.0 965,315.0" fill="none" stroke="#527085" stroke-width="2"/>
+<rect x="894.75" y="291.0" width="70.5" height="17" rx="3" fill="#f5f8fc"/>
+<text x="900.75" y="303.0" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#23384d">read-only</text>
+<polyline points="700.0,435 700.0,505" fill="none" stroke="#527085" stroke-width="2"/>
+<rect x="687.75" y="458.0" width="44.5" height="17" rx="3" fill="#f5f8fc"/>
+<text x="693.75" y="470.0" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#23384d">HTTPS</text>
+<rect x="45" y="195" width="390" height="240" rx="12" fill="#eaf2f6" stroke="#43728c" stroke-width="1.6"/>
+<text x="63" y="219" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#43728c">OPERATOR-SELECTED CLIENT</text>
+<text x="63" y="247" font-family="Arial, sans-serif" font-size="19" font-weight="700" fill="#23384d">MCP host</text>
+<rect x="57" y="279" width="366" height="33" rx="5" fill="#ffffff" stroke="#cfdae2"/>
+<text x="69" y="298" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">JSON-RPC over stdin / stdout</text>
+<rect x="57" y="318" width="366" height="33" rx="5" fill="#ffffff" stroke="#cfdae2"/>
+<text x="69" y="337" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">Protected configuration and credentials</text>
+<rect x="505" y="195" width="390" height="240" rx="12" fill="#e5f2ee" stroke="#24766b" stroke-width="1.6"/>
+<text x="523" y="219" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#24766b">LOCAL PYTHON PROCESS</text>
+<text x="523" y="247" font-family="Arial, sans-serif" font-size="19" font-weight="700" fill="#23384d">Diagnostic subprocess</text>
+<rect x="517" y="279" width="366" height="33" rx="5" fill="#ffffff" stroke="#cfdae2"/>
+<text x="529" y="298" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">ObservabilityMCP: stdio / backend dispatch</text>
+<rect x="517" y="318" width="366" height="33" rx="5" fill="#ffffff" stroke="#cfdae2"/>
+<text x="529" y="337" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">LogReader: bounded fixed-source reads</text>
+<rect x="517" y="357" width="366" height="33" rx="5" fill="#ffffff" stroke="#cfdae2"/>
+<text x="529" y="376" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">Diagnostic contract: sanitize / correlate</text>
+<rect x="965" y="195" width="390" height="240" rx="12" fill="#edf2f6" stroke="#607587" stroke-width="1.6"/>
+<text x="983" y="219" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#607587">LOCAL READ-ONLY EVIDENCE</text>
+<text x="983" y="247" font-family="Arial, sans-serif" font-size="19" font-weight="700" fill="#23384d">Protected JSONL logs</text>
+<rect x="977" y="279" width="366" height="33" rx="5" fill="#ffffff" stroke="#cfdae2"/>
+<text x="989" y="298" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">Fixed operator-configured source files</text>
+<rect x="977" y="318" width="366" height="33" rx="5" fill="#ffffff" stroke="#cfdae2"/>
+<text x="989" y="337" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">Sanitized bounded events and correlation</text>
+<rect x="505" y="505" width="390" height="240" rx="12" fill="#f2edf8" stroke="#8264a0" stroke-width="1.6"/>
+<text x="523" y="529" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#8264a0">OPTIONAL EXTERNAL DEPLOYMENT</text>
+<text x="523" y="557" font-family="Arial, sans-serif" font-size="19" font-weight="700" fill="#23384d">Compatible HPC backend</text>
+<rect x="517" y="589" width="366" height="33" rx="5" fill="#ffffff" stroke="#cfdae2"/>
+<text x="529" y="608" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">Diagnostic API and registered plans</text>
+<rect x="517" y="628" width="366" height="33" rx="5" fill="#ffffff" stroke="#cfdae2"/>
+<text x="529" y="647" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">Independent approval; allowlisted handlers</text>
+<rect x="517" y="667" width="366" height="33" rx="5" fill="#ffffff" stroke="#cfdae2"/>
+<text x="529" y="686" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">PostgreSQL resolution memory; migration 017</text>
+<text x="40" y="831" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">Containment describes ownership. Connections do not encode execution order. See WORKFLOWS.md for lifecycle decisions.</text>
+<text x="40" y="855" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#496277">This repository owns a diagnostic utility. The optional backend has its own installation, credentials and execution authority.</text>
 </svg>

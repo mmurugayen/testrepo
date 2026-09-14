@@ -1,6 +1,6 @@
 # testrepo
 
-Reviewed **2026-09-14**, branch `main`, commit [`05ff385f52d4`](https://github.com/mmurugayen/testrepo/commit/05ff385f52d4a7c73a7b3f989ac8cfc8d02e4c25).
+Last source review: **2026-09-14**, default branch `main`, commit [`89795c0961a9`](https://github.com/mmurugayen/testrepo/commit/89795c0961a9feb3fa4e4a2c63018b39fa1a86da). This records a documentation review of the linked source snapshot.
 
 This repository contains a standalone Python diagnostic/MCP utility and repository test material. It does not currently define a deployable domain product or Terraform infrastructure. The diagnostic utility reads operator-configured logs; optional recovery uses a separately deployed, compatible HPC backend.
 
@@ -27,3 +27,5 @@ python3 scripts/check_observability_coverage.py
 ```
 
 [Observability CI](.github/workflows/observability.yml) runs the utility contracts. [Feature acceptance](docs/product/backlog/GYS-OBS-001.md) tracks scope; [documentation validation](docs/current/VALIDATION.md) records checks actually run for this update.
+
+Current guide maintenance: the [documentation audit](docs/current/DOCUMENTATION_AUDIT.md) records source revisions and historical-document status. Validate editable diagrams with `python3 docs/current/diagrams/render.py --check`.

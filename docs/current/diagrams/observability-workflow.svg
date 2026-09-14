@@ -4,7 +4,7 @@
 <rect width="1220" height="1240" fill="#f5f8fc"/>
 <text x="40" y="47" font-family="Arial, sans-serif" font-size="27" font-weight="700" fill="#23384d">Utility diagnostic recovery workflow</text>
 <text x="40" y="79" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#236977">WORKFLOW / ACTIONS, DECISIONS AND OUTCOMES</text>
-<text x="40" y="106" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">Source review: 14 September 2026 | Current source; independent approval and qualification boundaries remain</text>
+<text x="40" y="106" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">Reviewed 2026-09-14 @ 89795c0961a9 | Current source; independent approval and qualification boundaries remain</text>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#376a80"/></marker></defs>
 <polyline points="405.0,297 405.0,345" fill="none" stroke="#376a80" stroke-width="2" marker-end="url(#arrow)"/>
 <polyline points="405.0,457 405.0,505" fill="none" stroke="#376a80" stroke-width="2" marker-end="url(#arrow)"/>
@@ -17,6 +17,9 @@
 <polyline points="740,881.0 870,881.0" fill="none" stroke="#376a80" stroke-width="2" marker-end="url(#arrow)"/>
 <rect x="769.4" y="859.0" width="71.19999999999999" height="19" rx="3" fill="#f5f8fc"/>
 <text x="773.4" y="872.0" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#23384d">uncertain</text>
+<polyline points="740,241.0 870,241.0" fill="none" stroke="#376a80" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="766.0" y="219.0" width="78.0" height="19" rx="3" fill="#f5f8fc"/>
+<text x="770.0" y="232.0" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#23384d">no backend</text>
 <rect x="70" y="185" width="670" height="112" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
 <text x="88" y="214" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Investigate correlated failure evidence</text>
 <text x="88" y="245" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Use configured logs and validate the cause against current system evidence.</text>
@@ -44,5 +47,9 @@
 <text x="888" y="854" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Reconcile outcome</text>
 <text x="888" y="885" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">No automatic effect retry after an</text>
 <text x="888" y="905" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">uncertain response.</text>
+<rect x="870" y="185" width="300" height="112" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
+<text x="888" y="214" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Local investigation</text>
+<text x="888" y="245" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">No backend: return log findings</text>
+<text x="888" y="265" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">only.</text>
 <text x="40" y="1208" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">Arrows show order and explicit alternative outcomes. See the guide for command and authority details.</text>
 </svg>

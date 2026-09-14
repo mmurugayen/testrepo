@@ -2,148 +2,84 @@
   {
     "id": "observability-architecture",
     "kind": "architecture",
-    "title": "Utility diagnostics architecture",
-    "subtitle": "GYS-OBS-001 | configured backend authority",
-    "zones": [
-      "Local evidence and MCP host",
-      "Diagnostic subprocess",
-      "Separately configured HPC backend"
-    ],
-    "nodes": [
-      {
-        "id": "logs",
-        "col": 0,
-        "row": 0,
-        "title": "Protected JSONL logs",
-        "detail": [
-          "Supervisor-owned capture / retention",
-          "Revision and correlation IDs"
-        ]
-      },
-      {
-        "id": "reader",
-        "col": 1,
-        "row": 0,
-        "title": "Bounded log reader",
-        "detail": [
-          "Configured sources; sanitized events",
-          "Missing evidence stays unknown"
-        ]
-      },
-      {
-        "id": "api",
-        "col": 2,
-        "row": 0,
-        "title": "HPC diagnostic API",
-        "detail": [
-          "Existing bearer session and roles",
-          "Matching backend deployment"
-        ]
-      },
+    "title": "testrepo diagnostic utility architecture",
+    "subtitle": "Current implemented composition",
+    "repository": "mmurugayen/testrepo",
+    "source_commit": "89795c0961a9feb3fa4e4a2c63018b39fa1a86da",
+    "description": "testrepo diagnostic utility architecture. Nested cards identify components within process, storage, source and external boundaries. Lines denote structural associations, not action order.",
+    "units": [
       {
         "id": "host",
         "col": 0,
-        "row": 1,
-        "title": "Operator-selected MCP host",
-        "detail": [
-          "Stdio JSON-RPC",
-          "No automatic collector installation"
+        "row": 0,
+        "title": "MCP host",
+        "boundary": "operator-selected client",
+        "type": "client",
+        "components": [
+          "JSON-RPC over stdin / stdout",
+          "Protected configuration and credentials"
         ]
       },
       {
         "id": "mcp",
         "col": 1,
-        "row": 1,
-        "title": "Platform MCP adapter",
-        "detail": [
-          "scripts/gysam_observability.py",
-          "Optional configured recovery tools"
+        "row": 0,
+        "title": "Diagnostic subprocess",
+        "boundary": "local Python process",
+        "type": "process",
+        "components": [
+          "ObservabilityMCP: stdio / backend dispatch",
+          "LogReader: bounded fixed-source reads",
+          "Diagnostic contract: sanitize / correlate"
         ]
       },
       {
-        "id": "plans",
+        "id": "logs",
         "col": 2,
-        "row": 1,
-        "title": "HPC automation service",
-        "detail": [
-          "Independent plan approval",
-          "Registered handlers; local plans"
+        "row": 0,
+        "title": "Protected JSONL logs",
+        "boundary": "local read-only evidence",
+        "type": "files",
+        "components": [
+          "Fixed operator-configured source files",
+          "Sanitized bounded events and correlation"
         ]
       },
       {
-        "id": "cfg",
-        "col": 0,
-        "row": 2,
-        "title": "Protected configuration",
-        "detail": [
-          "Fixed origins, targets and credentials",
-          "Recovery disabled unless configured"
-        ]
-      },
-      {
-        "id": "contract",
+        "id": "backend",
         "col": 1,
-        "row": 2,
-        "title": "Shared diagnostic contract",
-        "detail": [
-          "Bounded IDs and fingerprints",
-          "Messages and secrets excluded"
-        ]
-      },
-      {
-        "id": "memory",
-        "col": 2,
-        "row": 2,
-        "title": "Resolution memory",
-        "detail": [
-          "PostgreSQL verified evidence",
-          "Backend migration 017 required"
+        "row": 1,
+        "title": "Compatible HPC backend",
+        "boundary": "optional external deployment",
+        "type": "external",
+        "components": [
+          "Diagnostic API and registered plans",
+          "Independent approval; allowlisted handlers",
+          "PostgreSQL resolution memory; migration 017"
         ]
       }
     ],
     "edges": [
       {
-        "from": "logs",
-        "to": "reader",
-        "label": "read"
-      },
-      {
         "from": "host",
         "to": "mcp",
-        "label": "stdio"
-      },
-      {
-        "from": "cfg",
-        "to": "mcp",
-        "label": "config"
+        "label": "stdio",
+        "dependency": false
       },
       {
         "from": "mcp",
-        "to": "reader",
-        "label": ""
+        "to": "logs",
+        "label": "read-only",
+        "dependency": false
       },
       {
         "from": "mcp",
-        "to": "api",
-        "label": "HTTPS"
-      },
-      {
-        "from": "api",
-        "to": "plans",
-        "label": ""
-      },
-      {
-        "from": "api",
-        "to": "memory",
-        "label": ""
-      },
-      {
-        "from": "mcp",
-        "to": "contract",
-        "label": ""
+        "to": "backend",
+        "label": "HTTPS",
+        "dependency": false
       }
     ],
-    "description": "Platform diagnostics architecture. Components and ownership boundaries; connections are structural."
+    "scope": "This repository owns a diagnostic utility. The optional backend has its own installation, credentials and execution authority."
   },
   {
     "id": "observability-workflow",
@@ -224,6 +160,16 @@
           "No automatic effect retry after an uncertain response."
         ],
         "warning": true
+      },
+      {
+        "id": "local",
+        "col": 1,
+        "row": 0,
+        "title": "Local investigation",
+        "detail": [
+          "No backend: return log findings only."
+        ],
+        "warning": false
       }
     ],
     "edges": [
@@ -261,8 +207,15 @@
         "from": "s4",
         "to": "b1",
         "label": "uncertain"
+      },
+      {
+        "from": "s0",
+        "to": "local",
+        "label": "no backend"
       }
     ],
-    "description": "Platform diagnostic recovery workflow with explicit alternative outcomes."
+    "description": "Platform diagnostic recovery workflow with explicit alternative outcomes.",
+    "source_commit": "89795c0961a9feb3fa4e4a2c63018b39fa1a86da",
+    "repository": "mmurugayen/testrepo"
   }
 ]
