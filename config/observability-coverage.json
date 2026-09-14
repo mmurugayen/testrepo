@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "product": "testrepo",
+  "scopes": [
+    {
+      "root": "scripts",
+      "boundary": "MCP protocol; no existing application runtime"
+    },
+    {
+      "root": "newtestrepo",
+      "boundary": "Empty Java placeholder; no executable implementation exists"
+    }
+  ],
+  "markers": [
+    "_instrument_module(globals()",
+    "@asgi_logging(",
+    "@wsgi_logging(",
+    "gysamObservedFetch",
+    "DiagnosticInterceptor",
+    "log_context(",
+    "instrument_platform(",
+    "class ObservabilityMCP"
+  ],
+  "required_boundaries": {
+    "scripts/gysam_observability.py": "class ObservabilityMCP"
+  },
+  "excluded": [
+    "Tests and fixtures",
+    "Historical release snapshots",
+    "Verified dependency checkouts: wrappers attach after pin verification",
+    "Private/pure helper calls use the enclosing failure boundary",
+    "Operator-only build/deployment scripts retain their existing exit/output contract"
+  ]
+}
