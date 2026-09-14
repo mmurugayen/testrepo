@@ -1,0 +1,24 @@
+{
+  "date": "2026-09-14",
+  "repository": "mmurugayen/testrepo",
+  "pr": 4,
+  "documentation_head": "761754c274bcd8742220aa90a244a6eee9597e85",
+  "integrated_base": "05ff385f52d4a7c73a7b3f989ac8cfc8d02e4c25",
+  "preserved_non_document_blobs": 14,
+  "runtime_source_changed": false,
+  "checks": [
+    {
+      "command": "python scripts/check_observability_coverage.py",
+      "exit_code": 0,
+      "output": "{\"feature\": \"GYS-OBS-001\", \"product\": \"testrepo\", \"source_files\": 5, \"provenance\": \"matched\", \"status\": \"passed\"}",
+      "stderr": ""
+    }
+  ],
+  "limits": [
+    "Current-head CI and normal merge remain required.",
+    "Original documentation inventory and validation are retained as historical evidence."
+  ],
+  "local_file_links_checked": 17,
+  "errors": [],
+  "status": "PASS"
+}

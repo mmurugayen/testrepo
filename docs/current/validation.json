@@ -1,0 +1,29 @@
+{
+  "repository": "testrepo",
+  "reviewed_commit": "05ff385f52d4a7c73a7b3f989ac8cfc8d02e4c25",
+  "local_links_checked": 6,
+  "preserved_archive_link_findings": 0,
+  "diagram_count": 0,
+  "modified_original_documents": [
+    "README.md"
+  ],
+  "checks": [],
+  "errors": [],
+  "reconciliation_checks": [
+    {
+      "command": "python3 scripts/check_observability_coverage.py",
+      "exit_code": 0,
+      "output": "{\"feature\": \"GYS-OBS-001\", \"product\": \"testrepo\", \"source_files\": 5, \"provenance\": \"matched\", \"status\": \"passed\"}\n"
+    },
+    {
+      "command": "python3 -m unittest discover -s tests -p test_observability_mcp.py",
+      "exit_code": 0,
+      "output": "................\n----------------------------------------------------------------------\nRan 16 tests in 1.570s\n\nOK\n"
+    },
+    {
+      "command": "python3 -m unittest discover -s tests -p test_operation_tracing.py",
+      "exit_code": 0,
+      "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.004s\n\nOK\n"
+    }
+  ]
+}

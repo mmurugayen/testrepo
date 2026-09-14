@@ -1,0 +1,268 @@
+[
+  {
+    "id": "observability-architecture",
+    "kind": "architecture",
+    "title": "Utility diagnostics architecture",
+    "subtitle": "GYS-OBS-001 | configured backend authority",
+    "zones": [
+      "Local evidence and MCP host",
+      "Diagnostic subprocess",
+      "Separately configured HPC backend"
+    ],
+    "nodes": [
+      {
+        "id": "logs",
+        "col": 0,
+        "row": 0,
+        "title": "Protected JSONL logs",
+        "detail": [
+          "Supervisor-owned capture / retention",
+          "Revision and correlation IDs"
+        ]
+      },
+      {
+        "id": "reader",
+        "col": 1,
+        "row": 0,
+        "title": "Bounded log reader",
+        "detail": [
+          "Configured sources; sanitized events",
+          "Missing evidence stays unknown"
+        ]
+      },
+      {
+        "id": "api",
+        "col": 2,
+        "row": 0,
+        "title": "HPC diagnostic API",
+        "detail": [
+          "Existing bearer session and roles",
+          "Matching backend deployment"
+        ]
+      },
+      {
+        "id": "host",
+        "col": 0,
+        "row": 1,
+        "title": "Operator-selected MCP host",
+        "detail": [
+          "Stdio JSON-RPC",
+          "No automatic collector installation"
+        ]
+      },
+      {
+        "id": "mcp",
+        "col": 1,
+        "row": 1,
+        "title": "Platform MCP adapter",
+        "detail": [
+          "scripts/gysam_observability.py",
+          "Optional configured recovery tools"
+        ]
+      },
+      {
+        "id": "plans",
+        "col": 2,
+        "row": 1,
+        "title": "HPC automation service",
+        "detail": [
+          "Independent plan approval",
+          "Registered handlers; local plans"
+        ]
+      },
+      {
+        "id": "cfg",
+        "col": 0,
+        "row": 2,
+        "title": "Protected configuration",
+        "detail": [
+          "Fixed origins, targets and credentials",
+          "Recovery disabled unless configured"
+        ]
+      },
+      {
+        "id": "contract",
+        "col": 1,
+        "row": 2,
+        "title": "Shared diagnostic contract",
+        "detail": [
+          "Bounded IDs and fingerprints",
+          "Messages and secrets excluded"
+        ]
+      },
+      {
+        "id": "memory",
+        "col": 2,
+        "row": 2,
+        "title": "Resolution memory",
+        "detail": [
+          "PostgreSQL verified evidence",
+          "Backend migration 017 required"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "from": "logs",
+        "to": "reader",
+        "label": "read"
+      },
+      {
+        "from": "host",
+        "to": "mcp",
+        "label": "stdio"
+      },
+      {
+        "from": "cfg",
+        "to": "mcp",
+        "label": "config"
+      },
+      {
+        "from": "mcp",
+        "to": "reader",
+        "label": ""
+      },
+      {
+        "from": "mcp",
+        "to": "api",
+        "label": "HTTPS"
+      },
+      {
+        "from": "api",
+        "to": "plans",
+        "label": ""
+      },
+      {
+        "from": "api",
+        "to": "memory",
+        "label": ""
+      },
+      {
+        "from": "mcp",
+        "to": "contract",
+        "label": ""
+      }
+    ],
+    "description": "Platform diagnostics architecture. Components and ownership boundaries; connections are structural."
+  },
+  {
+    "id": "observability-workflow",
+    "kind": "workflow",
+    "title": "Utility diagnostic recovery workflow",
+    "subtitle": "Current source; independent approval and qualification boundaries remain",
+    "nodes": [
+      {
+        "id": "s0",
+        "col": 0,
+        "row": 0,
+        "title": "Investigate correlated failure evidence",
+        "detail": [
+          "Use configured logs and validate the cause against current system evidence."
+        ]
+      },
+      {
+        "id": "s1",
+        "col": 0,
+        "row": 1,
+        "title": "Consult verified resolution memory",
+        "detail": [
+          "An enabled registered recommendation requires qualifying distinct verified plans."
+        ]
+      },
+      {
+        "id": "s2",
+        "col": 0,
+        "row": 2,
+        "title": "Create a governed plan",
+        "detail": [
+          "Use only the configured target alias and allowlisted action."
+        ]
+      },
+      {
+        "id": "s3",
+        "col": 0,
+        "row": 3,
+        "title": "Obtain separate HPC approval",
+        "detail": [
+          "The existing backend owns approval; the MCP adapter cannot approve itself."
+        ]
+      },
+      {
+        "id": "s4",
+        "col": 0,
+        "row": 4,
+        "title": "Apply the already approved plan once",
+        "detail": [
+          "Existing HPC state and handler controls determine whether execution is allowed."
+        ]
+      },
+      {
+        "id": "s5",
+        "col": 0,
+        "row": 5,
+        "title": "Verify and record the resolution",
+        "detail": [
+          "Backend checks verified non-simulated outcomes; operator confirms the failure association."
+        ]
+      },
+      {
+        "id": "b0",
+        "col": 1,
+        "row": 1,
+        "title": "No recommendation",
+        "detail": [
+          "Unknown or conflicting evidence does not create a plan."
+        ],
+        "warning": true
+      },
+      {
+        "id": "b1",
+        "col": 1,
+        "row": 4,
+        "title": "Reconcile outcome",
+        "detail": [
+          "No automatic effect retry after an uncertain response."
+        ],
+        "warning": true
+      }
+    ],
+    "edges": [
+      {
+        "from": "s0",
+        "to": "s1",
+        "label": ""
+      },
+      {
+        "from": "s1",
+        "to": "s2",
+        "label": ""
+      },
+      {
+        "from": "s2",
+        "to": "s3",
+        "label": ""
+      },
+      {
+        "from": "s3",
+        "to": "s4",
+        "label": ""
+      },
+      {
+        "from": "s4",
+        "to": "s5",
+        "label": ""
+      },
+      {
+        "from": "s1",
+        "to": "b0",
+        "label": "unqualified"
+      },
+      {
+        "from": "s4",
+        "to": "b1",
+        "label": "uncertain"
+      }
+    ],
+    "description": "Platform diagnostic recovery workflow with explicit alternative outcomes."
+  }
+]

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1220" height="1240" viewBox="0 0 1220 1240" role="img" aria-labelledby="title desc">
+<title id="title">Utility diagnostic recovery workflow</title>
+<desc id="desc">Platform diagnostic recovery workflow with explicit alternative outcomes.</desc>
+<rect width="1220" height="1240" fill="#f5f8fc"/>
+<text x="40" y="47" font-family="Arial, sans-serif" font-size="27" font-weight="700" fill="#23384d">Utility diagnostic recovery workflow</text>
+<text x="40" y="79" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#236977">WORKFLOW / ACTIONS, DECISIONS AND OUTCOMES</text>
+<text x="40" y="106" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">Source review: 14 September 2026 | Current source; independent approval and qualification boundaries remain</text>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#376a80"/></marker></defs>
+<polyline points="405.0,297 405.0,345" fill="none" stroke="#376a80" stroke-width="2" marker-end="url(#arrow)"/>
+<polyline points="405.0,457 405.0,505" fill="none" stroke="#376a80" stroke-width="2" marker-end="url(#arrow)"/>
+<polyline points="405.0,617 405.0,665" fill="none" stroke="#376a80" stroke-width="2" marker-end="url(#arrow)"/>
+<polyline points="405.0,777 405.0,825" fill="none" stroke="#376a80" stroke-width="2" marker-end="url(#arrow)"/>
+<polyline points="405.0,937 405.0,985" fill="none" stroke="#376a80" stroke-width="2" marker-end="url(#arrow)"/>
+<polyline points="740,401.0 870,401.0" fill="none" stroke="#376a80" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="762.6" y="379.0" width="84.8" height="19" rx="3" fill="#f5f8fc"/>
+<text x="766.6" y="392.0" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#23384d">unqualified</text>
+<polyline points="740,881.0 870,881.0" fill="none" stroke="#376a80" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="769.4" y="859.0" width="71.19999999999999" height="19" rx="3" fill="#f5f8fc"/>
+<text x="773.4" y="872.0" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#23384d">uncertain</text>
+<rect x="70" y="185" width="670" height="112" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
+<text x="88" y="214" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Investigate correlated failure evidence</text>
+<text x="88" y="245" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Use configured logs and validate the cause against current system evidence.</text>
+<rect x="70" y="345" width="670" height="112" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
+<text x="88" y="374" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Consult verified resolution memory</text>
+<text x="88" y="405" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">An enabled registered recommendation requires qualifying distinct verified plans.</text>
+<rect x="70" y="505" width="670" height="112" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
+<text x="88" y="534" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Create a governed plan</text>
+<text x="88" y="565" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Use only the configured target alias and allowlisted action.</text>
+<rect x="70" y="665" width="670" height="112" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
+<text x="88" y="694" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Obtain separate HPC approval</text>
+<text x="88" y="725" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">The existing backend owns approval; the MCP adapter cannot approve itself.</text>
+<rect x="70" y="825" width="670" height="112" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
+<text x="88" y="854" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Apply the already approved plan once</text>
+<text x="88" y="885" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Existing HPC state and handler controls determine whether execution is allowed.</text>
+<rect x="70" y="985" width="670" height="112" rx="12" fill="#ffffff" stroke="#91a7ba" stroke-width="1.5"/>
+<text x="88" y="1014" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Verify and record the resolution</text>
+<text x="88" y="1045" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Backend checks verified non-simulated outcomes; operator confirms the failure</text>
+<text x="88" y="1065" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">association.</text>
+<rect x="870" y="345" width="300" height="112" rx="12" fill="#fff2e9" stroke="#91a7ba" stroke-width="1.5"/>
+<text x="888" y="374" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">No recommendation</text>
+<text x="888" y="405" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">Unknown or conflicting evidence does</text>
+<text x="888" y="425" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">not create a plan.</text>
+<rect x="870" y="825" width="300" height="112" rx="12" fill="#fff2e9" stroke="#91a7ba" stroke-width="1.5"/>
+<text x="888" y="854" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#23384d">Reconcile outcome</text>
+<text x="888" y="885" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">No automatic effect retry after an</text>
+<text x="888" y="905" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#496277">uncertain response.</text>
+<text x="40" y="1208" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#23384d">Arrows show order and explicit alternative outcomes. See the guide for command and authority details.</text>
+</svg>
