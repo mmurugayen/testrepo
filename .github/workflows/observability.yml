@@ -1,0 +1,29 @@
+name: Observability contracts
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnostics:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, Linux, X64]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Verify source boundaries and shared-source provenance
+        run: python3 scripts/check_observability_coverage.py
+      - name: Exercise MCP transport, privacy and operation semantics
+        run: |
+          python3 -m unittest discover -s tests -p 'test_observability_mcp.py' -v
+          python3 -m unittest discover -s tests -p 'test_operation_tracing.py' -v
+      - name: Exercise browser HTTP diagnostics when present
+        run: |
+          if [ -f tests/test_browser_diagnostics.cjs ]; then
+            node --test tests/test_browser_diagnostics.cjs
+          fi

@@ -1,5 +1,7 @@
 # Documentation audit: testrepo
 
+> Integration update (2026-09-14): this document retains the original source-review evidence below. Later default-branch diagnostics and maintenance are retained; see [INTEGRATION.md](INTEGRATION.md) for the reconciled revision and current validation limits.
+
 Reviewed **2026-09-14**, default branch `main`, commit [`1b32fa402083`](https://github.com/mmurugayen/testrepo/commit/1b32fa402083c20ea05a47e6d3909303111beac8).
 
 Inventory: **2 existing text documents**, **0 Office/PDF artifacts**, and **0 associated documentation assets**. See the [complete machine-readable inventory](documentation-inventory.json) for original and reviewed Git blob hashes.

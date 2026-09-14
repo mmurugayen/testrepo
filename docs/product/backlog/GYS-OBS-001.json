@@ -1,0 +1,45 @@
+{
+  "id": "GYS-OBS-001",
+  "product": "testrepo",
+  "title": "Correlated diagnostics, MCP investigation and verified recovery learning",
+  "priority": "high",
+  "status": "implemented_candidate_qualification_pending",
+  "backlog_type": "cross-product extension; original source-backed feature catalogs remain authoritative",
+  "scope": "Scaffold tooling and contract for future implementation; no prior runtime exists",
+  "implementation": [
+    "scripts/gysam_observability.py",
+    "scripts/gysam_diagnostics.py",
+    "docs/OBSERVABILITY_MCP.md",
+    "docs/OBSERVABILITY_COVERAGE.json"
+  ],
+  "acceptance": [
+    {
+      "id": "OBS-01",
+      "requirement": "Bounded JSON diagnostics preserve operation outcomes and exclude payloads and secrets",
+      "evidence": "tests/test_operation_tracing.py"
+    },
+    {
+      "id": "OBS-02",
+      "requirement": "MCP can correlate, search and investigate fixed local sources with bounded input",
+      "evidence": "tests/test_observability_mcp.py"
+    },
+    {
+      "id": "OBS-03",
+      "requirement": "Every active source file has a reviewed boundary classification and shared copies retain provenance",
+      "evidence": "scripts/check_observability_coverage.py"
+    },
+    {
+      "id": "OBS-04",
+      "requirement": "Only separately approved and server-verified recoveries enter durable resolution memory",
+      "evidence": "mmurugayen/gysam-hpc backend/tests/test_diagnostic_learning.py and tests/test_release_postgres.py"
+    },
+    {
+      "id": "OBS-05",
+      "requirement": "Qualify real collector retention, deployed revision, authentication, PostgreSQL migration and site runbooks",
+      "evidence": "Deployment qualification required; no live collector or recovery deployment claimed"
+    }
+  ],
+  "learning": "operator-confirmed, server-verified resolution memory",
+  "release_gate": "Required repository CI/review plus real deployment qualification",
+  "automatic_fix_guarantee": false
+}

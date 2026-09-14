@@ -1,24 +1,30 @@
 # testrepo
 
-Last source review: **2026-09-14**, default branch `main`, commit [`1b32fa402083`](https://github.com/mmurugayen/testrepo/commit/1b32fa402083c20ea05a47e6d3909303111beac8). This records documentation review, not a release or live-system certification.
+Documentation reconciled on **2026-09-14** with `main` at [`05ff385f52d4`](https://github.com/mmurugayen/testrepo/commit/05ff385f52d4a7c73a7b3f989ac8cfc8d02e4c25).
 
-This repository is a placeholder/test repository. The reviewed default branch contains 3 tracked file(s) and no deployable product, application entry point, infrastructure module or CI workflow.
+This repository contains a shared diagnostics and MCP investigation foundation. It does not yet define a deployable domain product or Terraform infrastructure module.
 
 ## Current contents
 
-- `README.md`
-- `new/newfile.txt`
-- `newtestrepo/main.java`
+| Source | Purpose |
+| --- | --- |
+| `scripts/gysam_diagnostics.py` and `scripts/gysam_diagnostic_contract.py` | Bounded structured operation diagnostics and their shared contract |
+| `scripts/gysam_observability.py` | MCP log investigation and optional verified recovery integration |
+| `config/observability-*.json` | Example connection settings, source coverage and provenance |
+| `tests/` | Diagnostic and MCP contract tests |
+| `.github/workflows/observability.yml` | Self-hosted diagnostic contract validation |
 
-## Architecture and workflow status
+The existing `new/newfile.txt` and `newtestrepo/main.java` files are retained as repository samples.
 
-There are no runtime components, data stores, provider resources or product execution paths to diagram in the reviewed source. Architecture and product workflow diagrams are **not applicable yet**. In particular, a repository name does not establish a Terraform implementation.
-
-## Checkout
+## Checkout and local validation
 
 ```bash
 git clone --branch main https://github.com/mmurugayen/testrepo.git
 cd testrepo
+python3 -m unittest discover -s tests -p test_observability_mcp.py
+python3 -m unittest discover -s tests -p test_operation_tracing.py
 ```
 
-No build, install, deploy or test command is defined. Add instructions and source-backed diagrams when executable content is introduced. See the [documentation audit](docs/current/DOCUMENTATION_AUDIT.md).
+Local contract tests do not establish live collector connectivity, verified recovery or production readiness. Configuration and operating boundaries are documented in the [MCP guide](docs/OBSERVABILITY_MCP.md) and [GYS-OBS-001 backlog](docs/product/backlog/GYS-OBS-001.md).
+
+The [earlier documentation audit](docs/current/DOCUMENTATION_AUDIT.md) describes the original pre-diagnostics snapshot. See the [integration record](docs/current/INTEGRATION.md) for the current reconciliation and validation limits.
