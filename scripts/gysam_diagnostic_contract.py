@@ -59,7 +59,7 @@ def signature(record):
     """Exact service/revision/code-family match; volatile IDs/line numbers excluded."""
     row = normalize(record)
     frame = (row.get('error_frames') or [{}])[-1]
-    return {key: row.get(key, '') for key in ('service', 'revision', 'event', 'component', 'operation', 'error_type')} | {
+    return {key: row.get(key, '') for key in ('service', 'revision', 'event', 'component', 'operation', 'error_type', 'reason', 'status_code', 'exit_code')} | {
         'file': frame.get('file', ''), 'function': frame.get('function', '')}
 
 

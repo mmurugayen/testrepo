@@ -44,7 +44,7 @@
   ],
   "source_sha256": {
     "scripts/check_observability_coverage.py": "f1a3ae1247f049163b6e090c77e651811941f51abc99f96bb139e04654ef4ed1",
-    "scripts/gysam_diagnostic_contract.py": "4c94d6bbabed6306523ff3620e50ecbd2dc23d40f4fcf1119d60974c89caddbb",
+    "scripts/gysam_diagnostic_contract.py": "595410bf5d6487dc57591f2b55d61518a8da8eea9bd48473c99d7074b0d71fce",
     "scripts/gysam_diagnostics.py": "dfd8e93f748c970a4c7914d31070b73e579d30b0356efbb2e4b347f3aaba377c",
     "scripts/gysam_observability.py": "980183fe5fb2c624c666e5bf2892e8e36e3e31e68ec47aafa42f025e8d4e7d01",
     "tests/test_observability_mcp.py": "4e8802169e02a736bd0c01379b0e46e0012f314c136836dac9bcbea19e6ad705",
