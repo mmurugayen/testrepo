@@ -2,7 +2,7 @@
 
 Last source review: **2026-09-14**, default branch `main`, commit [`89795c0961a9`](https://github.com/mmurugayen/testrepo/commit/89795c0961a9feb3fa4e4a2c63018b39fa1a86da). This records a documentation review of the linked source snapshot.
 
-Reviewed 2026-09-14 against `05ff385f52d4a7c73a7b3f989ac8cfc8d02e4c25`. The source contains a diagnostic utility; no domain product or Terraform resources are declared.
+The source contains a diagnostic utility; no domain product or Terraform resources are declared.
 
 - [Architecture](ARCHITECTURE.md)
 - [Workflow](WORKFLOWS.md)
