@@ -7,6 +7,7 @@ source hashes so independent products do not import unverified runtime code.
 import argparse
 from collections import deque
 from contextlib import contextmanager
+from http.client import HTTPException
 import ipaddress
 import json
 import os
@@ -153,21 +154,45 @@ class Backend:
                 'Content-Type': 'application/json', 'X-Request-ID': uuid4().hex})
         try:
             with self.opener.open(request, timeout=10) as response:
+                lengths = response.headers.get_all('Content-Length', [])
+                transfers = response.headers.get_all('Transfer-Encoding', [])
+                if (len(lengths) > 1 or len(transfers) > 1 or (lengths and transfers)
+                        or (transfers and transfers[0].strip().lower() != 'chunked')):
+                    raise ValueError('invalid_backend_response')
+                expected = None
+                if lengths:
+                    length = lengths[0].strip()
+                    if not re.fullmatch(r'[0-9]{1,20}', length):
+                        raise ValueError('invalid_backend_response')
+                    expected = int(length)
+                    if expected > MAX_MESSAGE:
+                        raise ValueError('backend_response_limit')
                 raw = response.read(MAX_MESSAGE + 1)
+                # A sized HTTPResponse.read does not enforce Content-Length at EOF.
+                # Do not accept an apparently valid JSON prefix as complete evidence.
+                if expected is not None and len(raw) != expected:
+                    raise ValueError('invalid_backend_response')
             if len(raw) > MAX_MESSAGE:
                 raise ValueError('backend_response_limit')
-            result = strict_json(raw)
+            try:
+                result = strict_json(raw)
+            except (ValueError, RecursionError, OverflowError):
+                raise ValueError('invalid_backend_response') from None
             if not isinstance(result, dict):
                 raise ValueError('invalid_backend_response')
             return result
         except HTTPError as exc:
             reason = 'backend_outcome_unknown' if method == 'POST' and exc.code >= 500 else 'backend_request_rejected_' + str(exc.code)
+            try:
+                exc.close()
+            except OSError:
+                pass
             raise ValueError(reason) from None
         except ValueError:
-            if method == 'POST' and path.endswith('/apply'):
+            if method == 'POST':
                 raise ValueError('backend_outcome_unknown') from None
             raise
-        except (URLError, OSError):
+        except (URLError, OSError, HTTPException):
             # No automatic retries: a timeout can leave an action outcome uncertain.
             raise ValueError('backend_outcome_unknown') from None
 
@@ -299,7 +324,10 @@ class ObservabilityMCP:
                 return {'plan_id': plan_id, 'state': plan.get('state'), 'applied': False,
                         'reason': 'approved_plan_required'}
             result = self.backend.call('POST', 'automation/plans/' + plan_id + '/apply', {})
-            state = result.get('plan', {}).get('state', 'uncertain')
+            plan_result = result.get('plan')
+            if not isinstance(plan_result, dict) or not isinstance(plan_result.get('state'), str):
+                raise ValueError('backend_outcome_unknown')
+            state = plan_result['state']
             return {'plan_id': plan_id, 'state': state, 'verified': state == 'verified',
                     'automatic_retry': False}
         rows = self.reader.read(limit=200)['records']

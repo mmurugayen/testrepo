@@ -184,6 +184,159 @@ class ProtocolTests(unittest.TestCase):
 
 class RecoveryTransportTests(unittest.TestCase):
     @contextmanager
+    def malformed_backend(self, mode, fail_method='POST'):
+        requests = []
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *_):
+                pass
+            def do_GET(self):
+                self.respond('GET')
+            def do_POST(self):
+                self.rfile.read(int(self.headers.get('Content-Length', 0)))
+                self.respond('POST')
+            def respond(self, method):
+                requests.append(method)
+                body = (b'{"target":"configured-node","state":"approved"}' if method == 'GET'
+                        else b'{"plan":{"state":"verified"}}')
+                broken = method == fail_method
+                if broken and mode == 'deep_json':
+                    body = b'{"plan":' + b'[' * 20000 + b'0' + b']' * 20000 + b'}'
+                if broken and mode == 'invalid_plan':
+                    body = b'{"plan":null}'
+                self.send_response(200)
+                if broken and mode == 'truncated_chunk':
+                    self.send_header('Transfer-Encoding', 'chunked')
+                    self.end_headers()
+                    self.wfile.write(b'100\r\n' + body)
+                    return
+                if broken and mode == 'chunked_valid':
+                    self.send_header('Transfer-Encoding', 'chunked')
+                    self.end_headers()
+                    self.wfile.write(('%x\r\n' % len(body)).encode() + body + b'\r\n0\r\n\r\n')
+                    return
+                if broken and mode == 'duplicate_length':
+                    self.send_header('Content-Length', str(len(body)))
+                if broken and mode == 'conflicting_framing':
+                    self.send_header('Transfer-Encoding', 'chunked')
+                length = str(len(body) + (10 if broken and mode == 'short_body' else 0))
+                if broken and mode == 'invalid_length':
+                    length = 'not-a-length'
+                if broken and mode == 'response_limit':
+                    length = str(adapter.MAX_MESSAGE + 1)
+                self.send_header('Content-Length', length)
+                self.end_headers()
+                self.wfile.write(body)
+        server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            yield {'url': 'http://127.0.0.1:' + str(server.server_port), 'allow_local_http': True}, requests
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(2)
+
+    def test_incomplete_apply_never_reports_verified_or_replays(self):
+        for mode in ('short_body', 'truncated_chunk', 'duplicate_length', 'deep_json', 'invalid_plan',
+                     'invalid_length', 'conflicting_framing', 'response_limit'):
+            with self.subTest(mode=mode), self.malformed_backend(mode) as (backend, requests), \
+                    patch.dict(os.environ, {'GYSAM_OBSERVABILITY_TOKEN': uuid4().hex}):
+                app = ObservabilityMCP({'product': 'test', 'sources': [], 'backend': backend,
+                                       'enable_recovery': True, 'targets': {'node': 'configured-node'}})
+                app.ready = True
+                result = app.dispatch({'jsonrpc': '2.0', 'id': 1, 'method': 'tools/call',
+                                      'params': {'name': 'recovery.apply', 'arguments': {'plan_id': 'plan-1'}}})
+                self.assertEqual(result.get('result'), {'content': [{'type': 'text', 'text': 'backend_outcome_unknown'}], 'isError': True})
+                self.assertEqual(requests, ['GET', 'POST'])
+                self.assertEqual(app.dispatch({'jsonrpc': '2.0', 'id': 2, 'method': 'ping'})['result'], {})
+
+    def test_incomplete_approval_read_never_dispatches_apply(self):
+        for mode in ('short_body', 'truncated_chunk', 'duplicate_length', 'deep_json',
+                     'invalid_length', 'conflicting_framing', 'response_limit'):
+            with self.subTest(mode=mode), self.malformed_backend(mode, 'GET') as (backend, requests), \
+                    patch.dict(os.environ, {'GYSAM_OBSERVABILITY_TOKEN': uuid4().hex}):
+                app = ObservabilityMCP({'product': 'test', 'sources': [], 'backend': backend,
+                                       'enable_recovery': True, 'targets': {'node': 'configured-node'}})
+                with self.assertRaises(ValueError):
+                    app.call('recovery.apply', {'plan_id': 'plan-1'})
+                self.assertEqual(requests, ['GET'])
+
+    def test_complete_fixed_length_and_chunked_apply_remain_functional(self):
+        for mode in ('valid', 'chunked_valid'):
+            with self.subTest(mode=mode), self.malformed_backend(mode) as (backend, requests), \
+                    patch.dict(os.environ, {'GYSAM_OBSERVABILITY_TOKEN': uuid4().hex}):
+                app = ObservabilityMCP({'product': 'test', 'sources': [], 'backend': backend,
+                                       'enable_recovery': True, 'targets': {'node': 'configured-node'}})
+                self.assertTrue(app.call('recovery.apply', {'plan_id': 'plan-1'})['verified'])
+                self.assertEqual(requests, ['GET', 'POST'])
+
+    def test_invalid_mutation_response_is_uncertain_for_every_write_route(self):
+        for route in ('observability/diagnostics/plans', 'observability/diagnostics/feedback'):
+            with self.subTest(route=route), self.malformed_backend('deep_json') as (backend, requests), \
+                    patch.dict(os.environ, {'GYSAM_OBSERVABILITY_TOKEN': uuid4().hex}):
+                with self.assertRaisesRegex(ValueError, '^backend_outcome_unknown    @contextmanager
+    def backend(self, state='approved', redirect=False):
+        requests = []
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *_):
+                pass
+            def do_GET(self):
+                requests.append(('GET', self.path, self.headers.get('Authorization')))
+                if redirect:
+                    self.send_response(302)
+                    self.send_header('Location', 'https://example.invalid/escape')
+                    self.end_headers()
+                    return
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(json.dumps({'id': 'plan-1', 'state': state, 'target': 'configured-node'}).encode())
+            def do_POST(self):
+                self.rfile.read(int(self.headers.get('Content-Length', 0)))
+                requests.append(('POST', self.path, self.headers.get('Authorization')))
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'{"plan":{"state":"verified"}}')
+        server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            yield {'url': 'http://127.0.0.1:' + str(server.server_port), 'allow_local_http': True}, requests
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(2)
+
+    def test_apply_uses_existing_approval_and_configured_target(self):
+        marker = uuid4().hex
+        with self.backend() as (backend, requests), patch.dict(os.environ, {'GYSAM_OBSERVABILITY_TOKEN': marker}):
+            app = ObservabilityMCP({'product': 'test', 'sources': [], 'backend': backend,
+                                   'enable_recovery': True, 'targets': {'node': 'configured-node'}})
+            result = app.call('recovery.apply', {'plan_id': 'plan-1'})
+        self.assertTrue(result['verified'])
+        self.assertEqual([r[0] for r in requests], ['GET', 'POST'])
+        self.assertTrue(all(r[2] == 'Bearer ' + marker for r in requests))
+        self.assertNotIn(marker, json.dumps(result))
+
+    def test_unapproved_plan_never_applies_and_redirect_never_forwards_credentials(self):
+        marker = uuid4().hex
+        with self.backend('planned') as (backend, requests), patch.dict(os.environ, {'GYSAM_OBSERVABILITY_TOKEN': marker}):
+            app = ObservabilityMCP({'product': 'test', 'sources': [], 'backend': backend,
+                                   'enable_recovery': True, 'targets': {'node': 'configured-node'}})
+            self.assertFalse(app.call('recovery.apply', {'plan_id': 'plan-1'})['applied'])
+            self.assertEqual(len(requests), 1)
+        with self.backend(redirect=True) as (backend, requests), patch.dict(os.environ, {'GYSAM_OBSERVABILITY_TOKEN': marker}):
+            with self.assertRaises(ValueError):
+                Backend(backend).call('GET', 'automation/plans/plan-1')
+            self.assertEqual(len(requests), 1)
+
+
+if __name__ == '__main__':
+    unittest.main()
+):
+                    Backend(backend).call('POST', route, {})
+                self.assertEqual(requests, ['POST'])
+
+    @contextmanager
     def backend(self, state='approved', redirect=False):
         requests = []
         class Handler(BaseHTTPRequestHandler):
