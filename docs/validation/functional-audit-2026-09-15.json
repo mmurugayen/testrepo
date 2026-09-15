@@ -1,0 +1,39 @@
+{
+  "review_date": "2026-09-15",
+  "repository": "mmurugayen/testrepo",
+  "scope": "Workflow queue coalescing and launcher exit diagnostics where applicable. This record does not close broader feature acceptance.",
+  "changes": [
+    ".github/workflows/observability.yml"
+  ],
+  "workflow_validation": "Parsed YAML preserves every pre-existing key and job; only workflow concurrency is added. Automatic runs share a workflow/branch group; manual runs use their unique run ID and are not cancelled. Existing queued runs and runner availability require separate operator action.",
+  "validation": [
+    {
+      "check": "tests",
+      "command": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "returncode": 0,
+      "output_tail": "rationTracingTests.test_results_signatures_and_descriptors_are_preserved) ... ok\ntest_success_is_debug_until_one_second (test_operation_tracing.OperationTracingTests.test_success_is_debug_until_one_second) ... ok\ntest_unsuccessful_adapter_result_is_visible_without_serializing_it (test_operation_tracing.OperationTracingTests.test_unsuccessful_adapter_result_is_visible_without_serializing_it) ... ok\n\n----------------------------------------------------------------------\nRan 22 tests in 1.591s\n\nOK\n"
+    },
+    {
+      "check": "observability",
+      "command": [
+        "python",
+        "scripts/check_observability_coverage.py"
+      ],
+      "returncode": 0,
+      "output_tail": "{\"feature\": \"GYS-OBS-001\", \"product\": \"testrepo\", \"source_files\": 5, \"provenance\": \"matched\", \"status\": \"passed\"}\n"
+    }
+  ],
+  "source_sha256": {
+    ".github/workflows/observability.yml": "8069a6c3dd6fe5a3f92ae09808b485d04d88e862e7917c7dfb0f363f0fa3dafb"
+  },
+  "deployment": "No host resource, service configuration, dependency pin, database schema or native execution changes. Existing product installation and self-hosted runner mappings cover these local launcher/CI corrections.",
+  "remaining": "Exact-candidate GitHub checks, runners without assigned capacity, all unfinished product acceptance criteria and live/native qualification remain open."
+}

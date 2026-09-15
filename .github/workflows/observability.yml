@@ -6,6 +6,10 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+# Coalesce obsolete automatic revisions without cancelling manual qualification.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 jobs:
   diagnostics:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
