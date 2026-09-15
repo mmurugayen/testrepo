@@ -274,65 +274,7 @@ class RecoveryTransportTests(unittest.TestCase):
         for route in ('observability/diagnostics/plans', 'observability/diagnostics/feedback'):
             with self.subTest(route=route), self.malformed_backend('deep_json') as (backend, requests), \
                     patch.dict(os.environ, {'GYSAM_OBSERVABILITY_TOKEN': uuid4().hex}):
-                with self.assertRaisesRegex(ValueError, '^backend_outcome_unknown    @contextmanager
-    def backend(self, state='approved', redirect=False):
-        requests = []
-        class Handler(BaseHTTPRequestHandler):
-            def log_message(self, *_):
-                pass
-            def do_GET(self):
-                requests.append(('GET', self.path, self.headers.get('Authorization')))
-                if redirect:
-                    self.send_response(302)
-                    self.send_header('Location', 'https://example.invalid/escape')
-                    self.end_headers()
-                    return
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(json.dumps({'id': 'plan-1', 'state': state, 'target': 'configured-node'}).encode())
-            def do_POST(self):
-                self.rfile.read(int(self.headers.get('Content-Length', 0)))
-                requests.append(('POST', self.path, self.headers.get('Authorization')))
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(b'{"plan":{"state":"verified"}}')
-        server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
-        thread = threading.Thread(target=server.serve_forever, daemon=True)
-        thread.start()
-        try:
-            yield {'url': 'http://127.0.0.1:' + str(server.server_port), 'allow_local_http': True}, requests
-        finally:
-            server.shutdown()
-            server.server_close()
-            thread.join(2)
-
-    def test_apply_uses_existing_approval_and_configured_target(self):
-        marker = uuid4().hex
-        with self.backend() as (backend, requests), patch.dict(os.environ, {'GYSAM_OBSERVABILITY_TOKEN': marker}):
-            app = ObservabilityMCP({'product': 'test', 'sources': [], 'backend': backend,
-                                   'enable_recovery': True, 'targets': {'node': 'configured-node'}})
-            result = app.call('recovery.apply', {'plan_id': 'plan-1'})
-        self.assertTrue(result['verified'])
-        self.assertEqual([r[0] for r in requests], ['GET', 'POST'])
-        self.assertTrue(all(r[2] == 'Bearer ' + marker for r in requests))
-        self.assertNotIn(marker, json.dumps(result))
-
-    def test_unapproved_plan_never_applies_and_redirect_never_forwards_credentials(self):
-        marker = uuid4().hex
-        with self.backend('planned') as (backend, requests), patch.dict(os.environ, {'GYSAM_OBSERVABILITY_TOKEN': marker}):
-            app = ObservabilityMCP({'product': 'test', 'sources': [], 'backend': backend,
-                                   'enable_recovery': True, 'targets': {'node': 'configured-node'}})
-            self.assertFalse(app.call('recovery.apply', {'plan_id': 'plan-1'})['applied'])
-            self.assertEqual(len(requests), 1)
-        with self.backend(redirect=True) as (backend, requests), patch.dict(os.environ, {'GYSAM_OBSERVABILITY_TOKEN': marker}):
-            with self.assertRaises(ValueError):
-                Backend(backend).call('GET', 'automation/plans/plan-1')
-            self.assertEqual(len(requests), 1)
-
-
-if __name__ == '__main__':
-    unittest.main()
-):
+                with self.assertRaisesRegex(ValueError, '^backend_outcome_unknown$'):
                     Backend(backend).call('POST', route, {})
                 self.assertEqual(requests, ['POST'])
 
