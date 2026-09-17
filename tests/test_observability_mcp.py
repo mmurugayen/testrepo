@@ -196,8 +196,8 @@ class RecoveryTransportTests(unittest.TestCase):
                 self.respond('POST')
             def respond(self, method):
                 requests.append(method)
-                body = (b'{"target":"configured-node","state":"approved"}' if method == 'GET'
-                        else b'{"plan":{"state":"verified"}}')
+                body = (b'{"id":"plan-1","target":"configured-node","state":"approved"}' if method == 'GET'
+                        else b'{"plan":{"id":"plan-1","target":"configured-node","state":"verified"}}')
                 broken = method == fail_method
                 if broken and mode == 'deep_json':
                     body = b'{"plan":' + b'[' * 20000 + b'0' + b']' * 20000 + b'}'
@@ -299,7 +299,7 @@ class RecoveryTransportTests(unittest.TestCase):
                 requests.append(('POST', self.path, self.headers.get('Authorization')))
                 self.send_response(200)
                 self.end_headers()
-                self.wfile.write(b'{"plan":{"state":"verified"}}')
+                self.wfile.write(b'{"plan":{"id":"plan-1","target":"configured-node","state":"verified"}}')
         server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()

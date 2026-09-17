@@ -26,6 +26,10 @@ jobs:
         run: |
           python3 -m unittest discover -s tests -p 'test_observability_mcp.py' -v
           python3 -m unittest discover -s tests -p 'test_operation_tracing.py' -v
+          python3 -m unittest discover -s tests -p 'test_recovery_identity.py' -v
+          python3 -m unittest discover -s tests -p 'test_operation_span_contract.py' -v
+          python3 -m unittest discover -s tests -p 'test_operation_outcomes.py' -v
+          python3 -m unittest discover -s tests -p 'test_diagnostic_sink_recovery.py' -v
       - name: Exercise browser HTTP diagnostics when present
         run: |
           if [ -f tests/test_browser_diagnostics.cjs ]; then
