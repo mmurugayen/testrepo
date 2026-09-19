@@ -250,6 +250,107 @@ class ReaderTests(unittest.TestCase):
         self.assertFalse(result['window_complete'])
 
 
+class OutboundBoundsTests(unittest.TestCase):
+    @staticmethod
+    def wire_size(response):
+        return len((json.dumps(response, separators=(',', ':'), allow_nan=False) + '\n').encode('utf-8'))
+
+    @staticmethod
+    def request(name, ident=1, **arguments):
+        return {'jsonrpc': '2.0', 'id': ident, 'method': 'tools/call',
+                'params': {'name': name, 'arguments': arguments}}
+
+    @staticmethod
+    def large_event():
+        # Every field is valid contract data; long traces and correlation IDs
+        # are supported without relying on rejected secrets or huge raw lines.
+        row = event(**{key: 'x' * 64 for key in contract.FIELDS})
+        row.update(service='gysam-platform', event='operation.failed', level='ERROR',
+                   request_id='request-1')
+        row['error_frames'] = [{'file': 'worker.py', 'function': 'submit', 'line': 42}] * 8
+        return row
+
+    def test_large_valid_queries_fail_explicitly_and_narrow_queries_preserve_counts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'events.jsonl'
+            path.write_text((json.dumps(self.large_event()) + '\n') * 200)
+            app = ObservabilityMCP({'product': 'test', 'sources': [{'id': 'runtime', 'path': path}]})
+            app.ready = True
+            for name in ('diagnostics.search', 'diagnostics.investigate'):
+                with self.subTest(name=name):
+                    response = app.dispatch(self.request(name, selector='request_id', value='request-1', limit=200))
+                    self.assertTrue(response['result']['isError'])
+                    self.assertEqual(response['result']['content'][0]['text'], 'tool_response_limit')
+                    self.assertNotIn('structuredContent', response['result'])
+                    self.assertLessEqual(self.wire_size(response), adapter.MAX_MESSAGE)
+                    narrow = app.dispatch(self.request(name, selector='request_id', value='request-1', limit=5))
+                    data = narrow['result']['structuredContent']
+                    self.assertFalse(narrow['result']['isError'])
+                    self.assertEqual(data['matched_records'], 200)
+                    self.assertTrue(data['result_limited'])
+                    self.assertFalse(data['window_complete'])
+                    self.assertEqual(len(data['records' if name.endswith('search') else 'timeline']), 5)
+
+    def test_exact_response_byte_boundary_includes_envelope_newline_and_unicode(self):
+        app = ObservabilityMCP({'product': 'test', 'sources': []})
+        app.ready = True
+        for size in (adapter.MAX_MESSAGE - 1, adapter.MAX_MESSAGE, adapter.MAX_MESSAGE + 1):
+            with self.subTest(size=size):
+                data = {'value': '\U0001f9ea', 'padding': ''}
+                ident = '\U0001f9ea' * 127
+                with patch.object(app, 'call', return_value=data):
+                    base = app.dispatch(self.request('diagnostics.search', ident))
+                    padding = size - self.wire_size(base)
+                    if padding % 2:
+                        ident += 'x'
+                        padding -= 1
+                    data['padding'] = 'x' * (padding // 2)
+                    response = app.dispatch(self.request('diagnostics.search', ident))
+                self.assertEqual(response['id'], ident)
+                if size <= adapter.MAX_MESSAGE:
+                    self.assertFalse(response['result']['isError'])
+                    self.assertEqual(self.wire_size(response), size)
+                    self.assertEqual(response['result']['structuredContent'], data)
+                else:
+                    self.assertTrue(response['result']['isError'])
+                    self.assertEqual(response['result']['content'][0]['text'], 'tool_response_limit')
+                    self.assertLessEqual(self.wire_size(response), adapter.MAX_MESSAGE)
+
+    def test_oversized_mutation_receipts_remain_uncertain_without_replay(self):
+        app = ObservabilityMCP({'product': 'test', 'sources': []})
+        app.ready = True
+        for name in ('recovery.propose', 'diagnostics.learn', 'recovery.apply'):
+            with self.subTest(name=name), patch.object(app, 'call', return_value={'receipt': 'x' * adapter.MAX_MESSAGE}) as call:
+                response = app.dispatch(self.request(name))
+                call.assert_called_once()
+                self.assertEqual(response['result'], {'content': [{'type': 'text', 'text': 'backend_outcome_unknown'}], 'isError': True})
+
+    def test_stdio_writes_complete_bounded_errors_and_remains_usable(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / 'events.jsonl'
+            source.write_text((json.dumps(self.large_event()) + '\n') * 200)
+            config = Path(directory) / 'config.json'
+            config.write_text(json.dumps({'schema_version': 1, 'product': 'test',
+                                         'sources': [{'id': 'runtime', 'path': str(source)}]}))
+            messages = [
+                {'jsonrpc': '2.0', 'id': 1, 'method': 'initialize', 'params': {'protocolVersion': '2025-11-25', 'capabilities': {}, 'clientInfo': {'name': 'test', 'version': '1'}}},
+                {'jsonrpc': '2.0', 'method': 'notifications/initialized'},
+                self.request('diagnostics.search', '\U0001f9ea' * 128, selector='request_id', value='request-1', limit=200),
+                {'jsonrpc': '2.0', 'id': 3, 'method': 'ping'},
+            ]
+            proc = subprocess.run([sys.executable, str(ROOT / 'scripts/gysam_observability.py'), '--config', str(config)],
+                                  input=''.join(json.dumps(item) + '\n' for item in messages).encode(), capture_output=True, timeout=10)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(proc.stderr, b'')
+        lines = proc.stdout.splitlines(keepends=True)
+        self.assertEqual(len(lines), 3)
+        self.assertTrue(all(line.endswith(b'\n') and len(line) <= adapter.MAX_MESSAGE for line in lines))
+        responses = [json.loads(line) for line in lines]
+        self.assertEqual(responses[1]['id'], '\U0001f9ea' * 128)
+        self.assertEqual(responses[1]['result']['content'][0]['text'], 'tool_response_limit')
+        self.assertEqual(responses[2], {'jsonrpc': '2.0', 'id': 3, 'result': {}})
+
+
 class ProtocolTests(unittest.TestCase):
     def app(self, **extra):
         return ObservabilityMCP({'schema_version': 1, 'product': 'gysam', 'sources': [], **extra})
@@ -362,6 +463,22 @@ class ProtocolTests(unittest.TestCase):
 
 
 class RecoveryTransportTests(unittest.TestCase):
+    def test_backend_request_byte_limit_is_checked_before_network_dispatch(self):
+        for size in (adapter.MAX_MESSAGE - 1, adapter.MAX_MESSAGE, adapter.MAX_MESSAGE + 1):
+            with self.subTest(size=size), self.malformed_backend('valid') as (backend, requests), \
+                    patch.dict(os.environ, {'GYSAM_OBSERVABILITY_TOKEN': uuid4().hex}):
+                payload = {'value': '\U0001f9ea', 'padding': ''}
+                payload['padding'] = 'x' * (size - len(json.dumps(payload, allow_nan=False).encode('utf-8')))
+                self.assertEqual(len(json.dumps(payload, allow_nan=False).encode('utf-8')), size)
+                client = Backend(backend)
+                if size <= adapter.MAX_MESSAGE:
+                    self.assertEqual(client.call('POST', 'observability/diagnostics/analyze', payload)['plan']['state'], 'verified')
+                    self.assertEqual(requests, ['POST'])
+                else:
+                    with self.assertRaisesRegex(ValueError, '^backend_request_limit$'):
+                        client.call('POST', 'observability/diagnostics/analyze', payload)
+                    self.assertEqual(requests, [])
+
     @contextmanager
     def malformed_backend(self, mode, fail_method='POST'):
         requests = []

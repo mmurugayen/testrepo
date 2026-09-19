@@ -44,6 +44,13 @@ def strict_json(raw):
     return json.loads(raw, object_pairs_hook=pairs, parse_constant=nonfinite)
 
 
+def _protocol_bytes(message):
+    # Share the exact wire encoding with the response budget check, including
+    # escaped non-ASCII IDs, the JSON-RPC envelope and the record delimiter.
+    return (json.dumps(message, separators=(',', ':'), ensure_ascii=True,
+                       allow_nan=False) + '\n').encode('ascii')
+
+
 @contextmanager
 def open_regular(path):
     descriptor = os.open(path, os.O_RDONLY | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_NOFOLLOW', 0))
@@ -182,11 +189,16 @@ class Backend:
         return url.rstrip('/'), token_env
 
     def call(self, method, path, payload=None):
+        body = None if payload is None else json.dumps(payload, allow_nan=False).encode('utf-8')
+        if body is not None and len(body) > MAX_MESSAGE:
+            # This is a definite local rejection: no credential access, network
+            # dispatch or external effect has occurred and no retry is attempted.
+            raise ValueError('backend_request_limit')
         token = os.environ.get(self.token_env, '')
         if not token or '\r' in token or '\n' in token:
             raise ValueError('backend_credential_unavailable')
         request = Request(self.url + '/api/v15/' + path,
-            data=None if payload is None else json.dumps(payload, allow_nan=False).encode(),
+            data=body,
             method=method, headers={'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json', 'X-Request-ID': uuid4().hex})
         try:
@@ -424,6 +436,13 @@ class ObservabilityMCP:
                     data = self.call(params.get('name'), params.get('arguments', {}))
                     result = {'content': [{'type': 'text', 'text': json.dumps(data, allow_nan=False)}],
                               'structuredContent': data, 'isError': False}
+                    if len(_protocol_bytes({**response, 'result': result})) > MAX_MESSAGE:
+                        # Never truncate JSON or silently discard evidence. An
+                        # already-dispatched mutation may have taken effect.
+                        reason = ('backend_outcome_unknown' if params.get('name') in
+                                  {'recovery.propose', 'recovery.apply', 'diagnostics.learn'}
+                                  else 'tool_response_limit')
+                        raise ValueError(reason)
                 except ValueError as exc:
                     # All ValueError messages produced here are stable local reason codes.
                     code = str(exc)
@@ -462,8 +481,8 @@ def main(argv=None):
         except (ValueError, UnicodeError, RecursionError):
             response = {'jsonrpc': '2.0', 'id': None, 'error': {'code': -32700, 'message': 'Parse error'}}
         if response is not None:
-            sys.stdout.write(json.dumps(response, separators=(',', ':'), allow_nan=False) + '\n')
-            sys.stdout.flush()
+            sys.stdout.buffer.write(_protocol_bytes(response))
+            sys.stdout.buffer.flush()
 
 
 if __name__ == '__main__':

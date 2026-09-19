@@ -122,6 +122,15 @@ HTTP input has a 256 KiB/5-second bound. Incomplete, dropped, unavailable or
 truncated evidence is reported. A bounded window is not a complete incident history.
 Use narrower IDs and the established collector for older rotated files.
 
+The outgoing MCP budget includes the complete JSON-RPC envelope, both content
+representations, escaped identifiers and the final newline. An oversized query
+returns `tool_response_limit` as a complete error response; lower `limit` or use
+a narrower selector. No rows or count fields are silently removed to fit. A
+backend request exceeding 256 KiB returns `backend_request_limit` before reading
+credentials or sending a request. If a mutation has already returned an oversized
+receipt, the response is `backend_outcome_unknown`; reconcile the authoritative
+backend outcome before another operator action. The adapter never retries it.
+
 Run `python3 -m unittest discover -s tests -p 'test_observability_mcp.py'` and
 `python3 -m unittest discover -s tests -p 'test_operation_tracing.py'`, then
 `python3 scripts/check_observability_coverage.py`. The new CI workflow runs these

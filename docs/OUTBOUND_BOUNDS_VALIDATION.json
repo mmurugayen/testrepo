@@ -1,0 +1,21 @@
+{
+  "date": "2026-09-19",
+  "repository": "mmurugayen/testrepo",
+  "canonical_repository": "mmurugayen/gysam-platform",
+  "canonical_commit": "67764345dc9bd0a0f2d3edfe114bd7dad4bc030e",
+  "canonical_pull_request": "https://github.com/mmurugayen/gysam-platform/pull/62",
+  "canonical_negative_control": "33-method MCP suite failed eight new subcases with the previous canonical adapter.",
+  "canonical_validation": "33 MCP tests, 80 complete source tests, provenance and policy gates passed; independent review passed three additional scenarios.",
+  "consumer_validation": {
+    "tests_passed": 72,
+    "skipped": 0,
+    "source_provenance": "passed",
+    "diagrams": "2 matched"
+  },
+  "copied_verbatim_sha256": {
+    "scripts/gysam_observability.py": "6da7aa5762d416173921372deec94eaeb3ae9ad4cfb90c9451cdfe24b7d4d28d",
+    "tests/test_observability_mcp.py": "ba6fe8a9a0a9c296f0d8db20612e2be3cd9dd3494b94801f9042796e3cf78c72"
+  },
+  "scope": "Exact copied source/tests enforce full 256 KiB protocol output and backend request-body ceilings with explicit sanitized errors, preserved narrowed-query counts and no automatic mutation retry.",
+  "qualification": "Candidate source evidence only; canonical review/CI/merge, current consumer CI/review and installed backend/collector gates remain required."
+}

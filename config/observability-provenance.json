@@ -4,11 +4,11 @@
   "canonical_repository": "mmurugayen/gysam-platform",
   "update_policy": "Review canonical changes, copy verbatim and refresh hashes together.",
   "sha256": {
-    "scripts/gysam_observability.py": "64d36484dbf418661d5055a6f77cca8206e7a04f021f905fe6c9fbe6fdb5c849",
+    "scripts/gysam_observability.py": "6da7aa5762d416173921372deec94eaeb3ae9ad4cfb90c9451cdfe24b7d4d28d",
     "scripts/gysam_diagnostic_contract.py": "595410bf5d6487dc57591f2b55d61518a8da8eea9bd48473c99d7074b0d71fce",
     "scripts/gysam_diagnostics.py": "dc807e2990744bb7df1e1d7756109aa44dcad7d83515e7b4cee4d23572839385",
     "scripts/check_observability_coverage.py": "f1a3ae1247f049163b6e090c77e651811941f51abc99f96bb139e04654ef4ed1",
-    "tests/test_observability_mcp.py": "b04ace62eba3194284b8a27949d06994809fa32c3a9a16c55f32ecf12f4e2dd1",
+    "tests/test_observability_mcp.py": "ba6fe8a9a0a9c296f0d8db20612e2be3cd9dd3494b94801f9042796e3cf78c72",
     "tests/test_operation_tracing.py": "071a47e456efb69da90511a31eb9753c1124559e844f9c48927841d5f45b5974",
     "tests/test_operation_outcomes.py": "d47e7f83109edb2a4490960133e2e3e5fdd556c5e11e9caef92877554c26c859",
     "tests/test_operation_span_contract.py": "c8f70a88995032ef78110118440ec9794bbf86f69b13e145e760ed8616b08aa5",
@@ -63,5 +63,24 @@
     },
     "scope": "Compose bounded-reader and strict configuration contracts; retain one normalized request identity across nested buffered WSGI middleware.",
     "qualification": "Canonical review/merge, current consumer CI/review, and existing installed backend/collector qualification remain required; no default branch or production acceptance is advanced."
+  },
+  "outbound_bounds_candidate": {
+    "date": "2026-09-19",
+    "canonical_repository": "mmurugayen/gysam-platform",
+    "canonical_commit": "67764345dc9bd0a0f2d3edfe114bd7dad4bc030e",
+    "canonical_pull_request": "https://github.com/mmurugayen/gysam-platform/pull/62",
+    "candidate_only": true,
+    "consumer_merge_requires_canonical_merge": true,
+    "copied_verbatim": [
+      "scripts/gysam_observability.py",
+      "tests/test_observability_mcp.py"
+    ],
+    "previous_sha256": {
+      "scripts/gysam_observability.py": "64d36484dbf418661d5055a6f77cca8206e7a04f021f905fe6c9fbe6fdb5c849",
+      "tests/test_observability_mcp.py": "b04ace62eba3194284b8a27949d06994809fa32c3a9a16c55f32ecf12f4e2dd1"
+    },
+    "scope": "Bound complete outbound MCP protocol bytes and backend request bodies; retain explicit incomplete evidence and mutation uncertainty without replay.",
+    "evidence": "docs/OUTBOUND_BOUNDS_VALIDATION.json",
+    "qualification": "Canonical review/CI/merge, current consumer CI/review, and existing installed backend/collector qualification remain required."
   }
 }
