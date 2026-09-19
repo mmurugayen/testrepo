@@ -92,6 +92,29 @@ class ReaderTests(unittest.TestCase):
         self.assertNotIn('unstructured-secret', json.dumps(data))
         self.assertFalse(data['window_complete'])
 
+    def test_all_sanitized_selector_identity_lengths_are_searchable(self):
+        app = ObservabilityMCP({'product': 'test', 'sources': [{'id': 'runtime', 'path': self.path}]})
+        app.ready = True
+        for selector in sorted(contract.SELECTORS):
+            for length in (64, 65, 96):
+                with self.subTest(selector=selector, length=length):
+                    value = 'x' * length
+                    self.write([event(**{selector: value}), event(**{selector: 'other'})])
+                    self.assertEqual(normalize(event(**{selector: value}))[selector], value)
+                    for name in ('diagnostics.search', 'diagnostics.investigate'):
+                        response = app.dispatch({'jsonrpc': '2.0', 'id': 1, 'method': 'tools/call',
+                            'params': {'name': name, 'arguments': {'selector': selector, 'value': value}}})['result']
+                        self.assertFalse(response['isError'], response)
+                        data = response['structuredContent']
+                        rows = data['records'] if name == 'diagnostics.search' else data['timeline']
+                        self.assertEqual([row[selector] for row in rows], [value])
+                        self.assertEqual(data['matched_records'], 1)
+                        self.assertTrue(data['window_complete'])
+            for value in ('x' * 97, 'bad/id', ''):
+                with self.subTest(selector=selector, invalid=value):
+                    with self.assertRaisesRegex(ValueError, 'invalid_selector'):
+                        self.reader().read(selector, value)
+
     def test_result_limit_missing_sources_and_service_filter(self):
         self.write([event(request_id='id-' + str(i)) for i in range(10)])
         data = self.reader().read(limit=2)

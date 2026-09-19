@@ -149,3 +149,7 @@ a sink-capacity problem; a broken log sink cannot change an operation's result.
 Recovery requires complete HTTP framing before a backend response can be treated as evidence. The adapter rejects duplicate or conflicting length/transfer headers, invalid lengths, oversized bodies, truncated fixed-length or chunked responses, excessive JSON nesting and malformed apply-result objects. A rejected approval read does not dispatch the apply request. An unusable write response returns `backend_outcome_unknown`; reconcile the plan against the authoritative backend before another operator action. The client never retries the write automatically. Normal fixed-length, chunked and connection-close-delimited JSON responses remain supported.
 
 The existing 10-second socket timeout is an inactivity timeout; this correction does not claim a deadline for the complete exchange. Real local HTTP regression tests exercise framing failures and successful recovery. Installed-backend and target-device qualification remain separate.
+
+### Diagnostic selector identity lengths
+
+Search and investigation selectors accept the same 1–96-character ASCII letters, digits, dot, underscore and hyphen identities retained by diagnostic normalization. This includes longer job, operation and correlation IDs already present in sanitized records. Recovery apply plan IDs retain their existing 64-character limit; this read-side correction does not broaden mutation authorization.

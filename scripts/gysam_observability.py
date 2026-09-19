@@ -76,7 +76,7 @@ class LogReader:
         self.sources = sources
 
     def read(self, selector=None, value=None, service=None, limit=100):
-        if selector is not None and (selector not in SELECTORS or not isinstance(value, str) or not IDENTITY.fullmatch(value)):
+        if selector is not None and (selector not in SELECTORS or not isinstance(value, str) or not NAME.fullmatch(value)):
             raise ValueError('invalid_selector')
         if service is not None and (not isinstance(service, str) or not NAME.fullmatch(service)):
             raise ValueError('invalid_service')

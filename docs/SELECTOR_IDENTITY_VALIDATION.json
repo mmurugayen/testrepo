@@ -1,0 +1,19 @@
+{
+  "date": "2026-09-19",
+  "canonical_parent": "67764345dc9bd0a0f2d3edfe114bd7dad4bc030e",
+  "defect": "Sanitized 65\u201396-character selector identities were accepted by producers and advertised by tools but rejected by the reader.",
+  "baseline_failed_subcases": 16,
+  "regression": "All eight selectors at lengths 64, 65 and 96 through search and investigation; exact matching and complete-window evidence; reject length97 and invalid syntax.",
+  "mcp_tests_passed": 34,
+  "source_sha256": {
+    "scripts/gysam_observability.py": "8e887ad889e54ea2f2c2d88603c8af4a4cb96ed7c067b2d221e5e5213a3ace89",
+    "tests/test_observability_mcp.py": "46d082bcae5e6b549b3d40876b367268a32c01dc8499440373a5b2fbecee04c9"
+  },
+  "recovery_plan_limit_unchanged": 64,
+  "qualification": "Source validation only; no installed-system or production acceptance.",
+  "repository": "testrepo",
+  "canonical_commit": "a22ebed84c00cd0e0af72ef2a19bc79145db853e",
+  "canonical_pull_request": "https://github.com/mmurugayen/gysam-platform/pull/62",
+  "candidate_only": true,
+  "consumer_merge_requires_canonical_merge": true
+}
