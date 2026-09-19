@@ -29,3 +29,7 @@ python3 scripts/check_observability_coverage.py
 [Observability CI](.github/workflows/observability.yml) runs the utility contracts. [Feature acceptance](docs/product/backlog/GYS-OBS-001.md) tracks scope; [documentation validation](docs/current/VALIDATION.md) records checks actually run for this update.
 
 Current guide maintenance: the [documentation audit](docs/current/DOCUMENTATION_AUDIT.md) records source revisions and historical-document status. Validate editable diagrams with `python3 docs/current/diagrams/render.py --check`.
+
+## Mandatory logging and quality gates
+
+All existing and future implementation in this repository follows the [logging and code-quality standard](docs/LOGGING_AND_CODE_QUALITY.md). Run `python3 scripts/quality_gate.py` and the repository's complete test/qualification suite before review. Pull requests must include privacy-safe structured logging for changed functionality and must pass syntax, Ruff lint, and all existing required CI checks; missing runners, skipped jobs, or unavailable native environments are not passes.
