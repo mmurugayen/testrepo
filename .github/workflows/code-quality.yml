@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   quality:
@@ -36,22 +35,4 @@ jobs:
             python scripts/quality_gate.py
           fi
       - name: Run repository-wide lint
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          set +e
-          python -m ruff check . --output-format=concise 2>&1 | tee /tmp/ruff.txt
-          status=${PIPESTATUS[0]}
-          set -e
-          if [ "$status" -ne 0 ] && [ -n "$PR_NUMBER" ]; then
-            {
-              echo "### Automated Ruff remediation report"
-              echo
-              echo '~~~text'
-              sed -n '1,200p' /tmp/ruff.txt
-              echo '~~~'
-            } > /tmp/ruff-comment.md
-            gh pr comment "$PR_NUMBER" --body-file /tmp/ruff-comment.md
-          fi
-          exit "$status"
+        run: python -m ruff check . --output-format=github
