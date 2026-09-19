@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """Render the adjacent diagrams.json to standalone accessible SVGs (stdlib only)."""
 import json
+import logging
 from html import escape
 from pathlib import Path
 import textwrap
 
 ROOT = Path(__file__).resolve().parent
+logger = logging.getLogger(__name__)
 
 def text(parts, x, y, value, size=16, color='#23384d', weight=400):
+    logger.debug("rendering text element")
     parts.append(f'<text x="{x}" y="{y}" font-family="Arial, sans-serif" font-size="{size}" font-weight="{weight}" fill="{color}">{escape(str(value))}</text>')
 
 def box(parts,x,y,w,h,title,detail,fill='#ffffff',stroke='#91a7ba'):
+    logger.debug("rendering diagram box")
     parts.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="12" fill="{fill}" stroke="{stroke}" stroke-width="1.5"/>')
     title_lines=textwrap.wrap(title,width=max(18,int((w-36)/10)))
     yy=y+29
@@ -25,6 +29,7 @@ def box(parts,x,y,w,h,title,detail,fill='#ffffff',stroke='#91a7ba'):
         raise ValueError('Text exceeds box: '+title)
 
 def render(spec):
+    logger.debug("rendering diagram")
     if "units" in spec:
         return render_containers(spec)
     arch=spec['kind']=='architecture'
@@ -89,6 +94,7 @@ def render(spec):
 
 def render_containers(spec):
     """Render structural containment and associations, without execution ordering."""
+    logger.debug("rendering container diagram")
     rows=max(n['row'] for n in spec['units'])+1
     width=1400
     height=195+rows*310+65
