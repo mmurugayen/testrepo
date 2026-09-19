@@ -227,6 +227,9 @@ def wsgi_logging(service):
         def wrapped(self, environ, start_response):
             request_id = normalize_request_id(environ.get('HTTP_X_REQUEST_ID'))
             environ['gysam.request_id'] = request_id
+            # Inner middleware must reuse the normalized ID, including when
+            # the original header was absent or rejected.
+            environ['HTTP_X_REQUEST_ID'] = request_id
             started, status, error = monotonic(), 500, None
             def contextual_start(value, headers, exc_info=None):
                 nonlocal status

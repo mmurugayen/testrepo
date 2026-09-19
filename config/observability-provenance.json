@@ -4,16 +4,17 @@
   "canonical_repository": "mmurugayen/gysam-platform",
   "update_policy": "Review canonical changes, copy verbatim and refresh hashes together.",
   "sha256": {
-    "scripts/gysam_observability.py": "17750e03a9a5f37e69966fd7170d8e525d339abbbe5e9f68ecf8d5dceb30a7fc",
+    "scripts/gysam_observability.py": "64d36484dbf418661d5055a6f77cca8206e7a04f021f905fe6c9fbe6fdb5c849",
     "scripts/gysam_diagnostic_contract.py": "595410bf5d6487dc57591f2b55d61518a8da8eea9bd48473c99d7074b0d71fce",
-    "scripts/gysam_diagnostics.py": "fd89621fd01b6c47e40e0c2cfb96ef8da114009d39091acab8af640c0a2777fc",
+    "scripts/gysam_diagnostics.py": "dc807e2990744bb7df1e1d7756109aa44dcad7d83515e7b4cee4d23572839385",
     "scripts/check_observability_coverage.py": "f1a3ae1247f049163b6e090c77e651811941f51abc99f96bb139e04654ef4ed1",
-    "tests/test_observability_mcp.py": "46b9a1ff500948f9e9d771944cc0a18d2eaff8c3986763b2e4cb6b7b1c2f6eb5",
+    "tests/test_observability_mcp.py": "b04ace62eba3194284b8a27949d06994809fa32c3a9a16c55f32ecf12f4e2dd1",
     "tests/test_operation_tracing.py": "071a47e456efb69da90511a31eb9753c1124559e844f9c48927841d5f45b5974",
     "tests/test_operation_outcomes.py": "d47e7f83109edb2a4490960133e2e3e5fdd556c5e11e9caef92877554c26c859",
     "tests/test_operation_span_contract.py": "c8f70a88995032ef78110118440ec9794bbf86f69b13e145e760ed8616b08aa5",
     "tests/test_recovery_identity.py": "d6c0c5e97daae89004cb0bc3b8b1ed6c0fb80cda0ac213d76e6ae4de43efc96f",
-    "tests/test_diagnostic_sink_recovery.py": "5fa9c3b2172d46e7d2aa020e4b53737fd40704b11d0127f1aeb2ce865235c9b2"
+    "tests/test_diagnostic_sink_recovery.py": "5fa9c3b2172d46e7d2aa020e4b53737fd40704b11d0127f1aeb2ce865235c9b2",
+    "tests/test_wsgi_request_correlation.py": "ebac38e9765bab1e18009d1baf78262e0a61fee497049896a1844f6360fe9e74"
   },
   "backend_response_integrity_review": {
     "date": "2026-09-16",
@@ -40,5 +41,27 @@
     ],
     "scope": "Bind recovery receipts to the requested plan and target; emit one timed terminal outcome; recover bounded shared stderr interruptions without replay.",
     "qualification": "Local source tests only; required candidate CI, reviews and installed collector/backend qualification remain open."
+  },
+  "configuration_wsgi_candidate": {
+    "date": "2026-09-19",
+    "canonical_repository": "mmurugayen/gysam-platform",
+    "canonical_commit": "8e92b4783d5ba97360a9d53364f0ced9b757fcf5",
+    "canonical_pull_request": "https://github.com/mmurugayen/gysam-platform/pull/62",
+    "candidate_only": true,
+    "consumer_merge_requires_canonical_merge": true,
+    "copied_verbatim": [
+      "scripts/gysam_observability.py",
+      "tests/test_observability_mcp.py",
+      "scripts/gysam_diagnostics.py",
+      "tests/test_wsgi_request_correlation.py"
+    ],
+    "previous_sha256": {
+      "scripts/gysam_observability.py": "17750e03a9a5f37e69966fd7170d8e525d339abbbe5e9f68ecf8d5dceb30a7fc",
+      "tests/test_observability_mcp.py": "46b9a1ff500948f9e9d771944cc0a18d2eaff8c3986763b2e4cb6b7b1c2f6eb5",
+      "scripts/gysam_diagnostics.py": "fd89621fd01b6c47e40e0c2cfb96ef8da114009d39091acab8af640c0a2777fc",
+      "tests/test_wsgi_request_correlation.py": null
+    },
+    "scope": "Compose bounded-reader and strict configuration contracts; retain one normalized request identity across nested buffered WSGI middleware.",
+    "qualification": "Canonical review/merge, current consumer CI/review, and existing installed backend/collector qualification remain required; no default branch or production acceptance is advanced."
   }
 }

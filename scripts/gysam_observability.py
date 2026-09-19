@@ -25,6 +25,7 @@ from gysam_diagnostic_contract import IDENTITY, NAME, SELECTORS, analyze, finger
 MAX_MESSAGE = 262144
 MAX_LINE = 16384
 MAX_SOURCE_BYTES = 2 * 1024 * 1024
+NONEMPTY_LINE = re.compile(rb'[^\n]+')
 PROTOCOLS = ('2025-11-25', '2025-06-18', '2025-03-26')
 PLAN_STATES = frozenset(('planned', 'approved', 'applying', 'simulated', 'verified',
     'verification_required', 'failed', 'uncertain', 'rollback_requested'))
@@ -78,7 +79,8 @@ class LogReader:
         for source in self.sources:
             rows = deque(maxlen=limit)
             rejected = 0
-            summary = {'source': source['id'], 'status': 'ready', 'truncated': False}
+            summary = {'source': source['id'], 'status': 'ready', 'truncated': False,
+                       'source_changed_during_read': False}
             try:
                 with open_regular(source['path']) as stream:
                     meta = os.fstat(stream.fileno())
@@ -86,19 +88,36 @@ class LogReader:
                         raise ValueError('regular_file_required')
                     offset = max(0, meta.st_size - MAX_SOURCE_BYTES)
                     stream.seek(offset)
-                    raw = stream.read(MAX_SOURCE_BYTES)
+                    expected = meta.st_size - offset
+                    raw = stream.read(expected)
+                    after = os.fstat(stream.fileno())
+                    changed = (meta.st_size != after.st_size or meta.st_mtime_ns != after.st_mtime_ns
+                               or meta.st_ctime_ns != after.st_ctime_ns or len(raw) != expected)
+                    try:
+                        current = os.stat(source['path'], follow_symlinks=False)
+                        changed = changed or (
+                            current.st_dev, current.st_ino, current.st_size,
+                            current.st_mtime_ns, current.st_ctime_ns) != (
+                            meta.st_dev, meta.st_ino, meta.st_size,
+                            meta.st_mtime_ns, meta.st_ctime_ns)
+                    except OSError:
+                        changed = True
+                    summary['source_changed_during_read'] = changed
                 summary['truncated'] = offset > 0
                 summary['incomplete_record'] = bool(raw and not raw.endswith(b'\n'))
-                if offset:
-                    raw = raw.partition(b'\n')[2]
-                # An incomplete writer record is not evidence until its newline arrives.
-                lines = raw.split(b'\n')[:-1]
-                for line in lines:
-                    if not line or len(line) > MAX_LINE:
+                # Iterate the bounded buffer without a split list or tail copy.
+                # Preserve empty-record rejection counts without allocating one
+                # Python object per newline in a malformed export burst.
+                end = raw.rfind(b'\n')
+                begin = raw.find(b'\n') + 1 if offset and end >= 0 else 0
+                rejected = raw.count(b'\n', begin, max(begin, end + 1))
+                for match in NONEMPTY_LINE.finditer(raw, begin, max(begin, end)):
+                    rejected -= 1
+                    if match.end() - match.start() > MAX_LINE:
                         rejected += 1
                         continue
                     try:
-                        row = normalize(strict_json(line))
+                        row = normalize(strict_json(match.group()))
                     except (ValueError, TypeError, UnicodeError, RecursionError, OverflowError):
                         rejected += 1
                         continue
@@ -118,7 +137,7 @@ class LogReader:
         return {'records': sorted(candidates, key=lambda x: x.get('timestamp', ''))[-limit:],
                 'sources': summaries, 'bounded_window': True,
                 'matched_records': matched, 'result_limited': matched > limit,
-                'window_complete': matched <= limit and all(s['status'] == 'ready' and not s['truncated'] and not s['rejected_records'] and not s.get('incomplete_record') for s in summaries)}
+                'window_complete': matched <= limit and all(s['status'] == 'ready' and not s['truncated'] and not s['rejected_records'] and not s.get('incomplete_record') and not s['source_changed_during_read'] for s in summaries)}
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -128,23 +147,39 @@ class NoRedirect(HTTPRedirectHandler):
 
 class Backend:
     def __init__(self, config):
+        self.url, self.token_env = self.validate_config(config)
         self.config = config
-        parts = urlsplit(config['url'])
+        self.opener = build_opener(ProxyHandler({}), NoRedirect())
+
+    @staticmethod
+    def validate_config(config):
+        if not isinstance(config, dict):
+            raise ValueError('invalid_backend_configuration')
+        url = config.get('url')
+        if (not isinstance(url, str) or not url or len(url) > 4096 or '\\' in url
+                or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in url)):
+            raise ValueError('invalid_backend_url')
+        if 'allow_local_http' in config and type(config['allow_local_http']) is not bool:
+            raise ValueError('invalid_local_http_setting')
+        try:
+            parts = urlsplit(url)
+            port = parts.port
+        except ValueError:
+            raise ValueError('invalid_backend_url') from None
         local = parts.hostname == 'localhost'
         try:
             local = local or ipaddress.ip_address(parts.hostname or '').is_loopback
         except ValueError:
             local = parts.hostname == 'localhost'
-        if (parts.username or parts.password or parts.query or parts.fragment
+        if (parts.username is not None or parts.password is not None or '?' in url or '#' in url
                 or parts.path not in ('', '/') or not parts.hostname
+                or parts.netloc.endswith(':') or (port is not None and not 1 <= port <= 65535)
                 or (parts.scheme != 'https' and not (parts.scheme == 'http' and local and config.get('allow_local_http') is True))):
             raise ValueError('invalid_backend_url')
         token_env = config.get('token_env', 'GYSAM_OBSERVABILITY_TOKEN')
         if not isinstance(token_env, str) or not re.fullmatch(r'[A-Z_][A-Z0-9_]{0,127}', token_env):
             raise ValueError('invalid_token_environment_name')
-        self.token_env = token_env
-        self.url = config['url'].rstrip('/')
-        self.opener = build_opener(ProxyHandler({}), NoRedirect())
+        return url.rstrip('/'), token_env
 
     def call(self, method, path, payload=None):
         token = os.environ.get(self.token_env, '')
@@ -202,8 +237,12 @@ class Backend:
 def load_config(path):
     path = Path(path).resolve()
     data = strict_json(bounded_file(path, 65536))
-    if not isinstance(data, dict) or data.get('schema_version') != 1:
+    if not isinstance(data, dict) or type(data.get('schema_version')) is not int or data['schema_version'] != 1:
         raise ValueError('invalid_configuration')
+    if 'enable_recovery' in data and type(data['enable_recovery']) is not bool:
+        raise ValueError('invalid_recovery_setting')
+    if data.get('backend') is not None:
+        Backend.validate_config(data['backend'])
     product = data.get('product')
     if not isinstance(product, str) or not NAME.fullmatch(product):
         raise ValueError('invalid_product')
@@ -247,7 +286,7 @@ class ObservabilityMCP:
     def __init__(self, config):
         self.config = config
         self.reader = LogReader(config.get('sources', []))
-        self.backend = Backend(config['backend']) if config.get('backend') else None
+        self.backend = Backend(config['backend']) if config.get('backend') is not None else None
         self.initialized = False
         self.ready = False
 

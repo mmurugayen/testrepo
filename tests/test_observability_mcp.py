@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import tracemalloc
 import unittest
 from unittest.mock import patch
 from uuid import uuid4
@@ -122,6 +123,132 @@ class ReaderTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.reader().read('path', '/etc/passwd')
 
+    def test_newline_burst_has_bounded_allocation_and_keeps_rejection_counts(self):
+        self.path.write_bytes(b'\n' * adapter.MAX_SOURCE_BYTES)
+        tracemalloc.start()
+        try:
+            data = self.reader().read()
+            _, peak = tracemalloc.get_traced_memory()
+        finally:
+            tracemalloc.stop()
+        self.assertEqual(data['records'], [])
+        self.assertEqual(data['sources'][0]['rejected_records'], adapter.MAX_SOURCE_BYTES)
+        self.assertFalse(data['window_complete'])
+        self.assertLess(peak, 6 * adapter.MAX_SOURCE_BYTES)
+
+    def test_snapshot_changes_do_not_claim_complete_evidence_and_next_read_recovers(self):
+        for action in ('rotate', 'append', 'truncate', 'unlink', 'rewrite'):
+            with self.subTest(action=action):
+                self.write([event(request_id='before')])
+                regular = adapter.open_regular
+
+                def change():
+                    if action == 'rotate':
+                        self.path.replace(self.root / 'rotated.jsonl')
+                        self.write([event(request_id='after')])
+                    elif action == 'append':
+                        with self.path.open('a') as output:
+                            output.write(json.dumps(event(request_id='after')) + '\n')
+                    elif action == 'truncate':
+                        self.path.write_bytes(b'')
+                    elif action == 'rewrite':
+                        metadata = self.path.stat()
+                        self.write([event(request_id='change')])
+                        # Equal-size writes can share a filesystem timestamp tick.
+                        # Make this observed-metadata change explicit without sleeps.
+                        os.utime(self.path, ns=(metadata.st_atime_ns,
+                                              metadata.st_mtime_ns + 2_000_000_000))
+                        self.assertEqual(self.path.stat().st_size, metadata.st_size)
+                    else:
+                        self.path.unlink()
+
+                @contextmanager
+                def change_after_read(path):
+                    with regular(path) as stream:
+                        class ChangingStream:
+                            def fileno(self): return stream.fileno()
+                            def seek(self, offset): return stream.seek(offset)
+                            def read(self, size):
+                                raw = stream.read(size)
+                                change()
+                                return raw
+                        yield ChangingStream()
+
+                with patch.object(adapter, 'open_regular', change_after_read):
+                    data = self.reader().read()
+                self.assertEqual([row['request_id'] for row in data['records']], ['before'])
+                self.assertFalse(data['window_complete'])
+                self.assertTrue(data['sources'][0]['source_changed_during_read'])
+                self.write([event(request_id='fresh')])
+                recovered = self.reader().read()
+                self.assertTrue(recovered['window_complete'])
+                self.assertFalse(recovered['sources'][0]['source_changed_during_read'])
+                self.assertEqual([row['request_id'] for row in recovered['records']], ['fresh'])
+
+    def test_final_path_stat_observes_same_inode_mutation(self):
+        for action in ('append', 'truncate', 'rewrite'):
+            with self.subTest(action=action):
+                self.write([event(request_id='before')])
+                original = self.path.stat()
+                real_stat = adapter.os.stat
+
+                def change_before_stat(path, *args, **kwargs):
+                    if Path(path) == self.path:
+                        if action == 'append':
+                            with self.path.open('a') as output:
+                                output.write(json.dumps(event(request_id='after')) + '\n')
+                        elif action == 'truncate':
+                            self.path.write_bytes(b'')
+                        else:
+                            self.write([event(request_id='change')])
+                            os.utime(self.path, ns=(original.st_atime_ns,
+                                                  original.st_mtime_ns + 2_000_000_000))
+                    return real_stat(path, *args, **kwargs)
+
+                with patch.object(adapter.os, 'stat', side_effect=change_before_stat):
+                    data = self.reader().read()
+                self.assertEqual([row['request_id'] for row in data['records']], ['before'])
+                self.assertFalse(data['window_complete'])
+                self.assertTrue(data['sources'][0]['source_changed_during_read'])
+                self.write([event(request_id='fresh')])
+                self.assertTrue(self.reader().read()['window_complete'])
+
+    def test_snapshot_does_not_read_new_bytes_past_opening_size(self):
+        self.write([event(request_id='before')])
+        regular = adapter.open_regular
+
+        @contextmanager
+        def append_before_read(path):
+            with regular(path) as stream:
+                class AppendingStream:
+                    def fileno(self): return stream.fileno()
+                    def seek(self, offset): return stream.seek(offset)
+                    def read(self, size):
+                        with self.path.open('a') as output:
+                            output.write(json.dumps(event(request_id='after')) + '\n')
+                        return stream.read(size)
+                wrapped = AppendingStream()
+                wrapped.path = self.path
+                yield wrapped
+
+        with patch.object(adapter, 'open_regular', append_before_read):
+            data = self.reader().read()
+        self.assertEqual([row['request_id'] for row in data['records']], ['before'])
+        self.assertTrue(data['sources'][0]['source_changed_during_read'])
+        self.assertFalse(data['window_complete'])
+
+    def test_mixed_line_edges_preserve_limits_filters_and_rejections(self):
+        valid = json.dumps(event(request_id='visible')).encode()
+        exact = valid + b' ' * (adapter.MAX_LINE - len(valid))
+        over = exact + b' '
+        self.path.write_bytes(b'\n' + exact + b'\n' + over + b'\n{bad}\n' +
+                              json.dumps(event(service='other')).encode() + b'\npartial')
+        result = self.reader().read(service='gysam-platform')
+        self.assertEqual([row['request_id'] for row in result['records']], ['visible'])
+        self.assertEqual(result['sources'][0]['rejected_records'], 3)
+        self.assertTrue(result['sources'][0]['incomplete_record'])
+        self.assertFalse(result['window_complete'])
+
 
 class ProtocolTests(unittest.TestCase):
     def app(self, **extra):
@@ -180,6 +307,58 @@ class ProtocolTests(unittest.TestCase):
             path = Path(directory) / 'config.json'
             path.write_text(json.dumps({'schema_version': 1, 'product': 'test', 'sources': [{'id': 'runtime', 'path': 'events.jsonl'}]}))
             self.assertEqual(load_config(path)['sources'][0]['path'], Path(directory) / 'events.jsonl')
+
+    def test_backend_configuration_rejects_malformed_origins_before_io(self):
+        invalid = [None, [], 'https://example.invalid', {}, {'token_env': 'TOKEN'},
+                   {'url': None}, {'url': []}, {'url': True}, {'url': ''}]
+        invalid.extend({'url': url} for url in (
+            'https://example.invalid:', 'https://example.invalid:0',
+            'https://example.invalid:65536', 'https://example.invalid:abc',
+            'https://@example.invalid', 'https://example.invalid?secret',
+            'https://example.invalid#secret', 'https://example.invalid\n',
+            ' https://example.invalid', 'https://exam ple.invalid', 'https://example.invalid\\evil',
+            'https://[invalid]/'))
+        invalid.extend({'url': 'https://example.invalid', 'allow_local_http': flag}
+                       for flag in (None, 0, 1, 'true'))
+        for config in invalid:
+            with self.subTest(config=config), patch.object(adapter, 'build_opener') as opener:
+                with self.assertRaises(ValueError):
+                    Backend(config)
+                opener.assert_not_called()
+        for url in ('https://example.invalid', 'https://example.invalid:1',
+                    'https://example.invalid:65535', 'https://[::1]:443'):
+            with self.subTest(url=url):
+                self.assertEqual(Backend({'url': url}).url, url)
+
+    def test_loaded_configuration_rejects_boolean_versions_and_recovery_flags(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'config.json'
+            invalid = [{'schema_version': value} for value in (True, 1.0, '1', None)]
+            invalid.extend({'enable_recovery': value} for value in (None, 0, 1, 'true'))
+            invalid.extend({'backend': value} for value in (False, [], {}, {'token_env': 'TOKEN'}))
+            for fields in invalid:
+                with self.subTest(fields=fields):
+                    path.write_text(json.dumps({'schema_version': 1, 'product': 'test', **fields}))
+                    with self.assertRaises(ValueError):
+                        load_config(path)
+            for fields in ({}, {'backend': None}, {'enable_recovery': False},
+                           {'backend': {'url': 'https://example.invalid'}, 'enable_recovery': True}):
+                path.write_text(json.dumps({'schema_version': 1, 'product': 'test', **fields}))
+                load_config(path)
+
+    def test_invalid_backend_startup_is_sanitized_and_has_no_protocol_output(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'config.json'
+            for backend in ({'token_env': 'PRIVATE_VALUE'}, {'url': ['PRIVATE_VALUE']},
+                            {'url': 'https://example.invalid:65536'}):
+                with self.subTest(backend=backend):
+                    path.write_text(json.dumps({'schema_version': 1, 'product': 'test', 'backend': backend}))
+                    proc = subprocess.run([sys.executable, str(ROOT / 'scripts/gysam_observability.py'),
+                                           '--config', str(path)], input='', text=True,
+                                          capture_output=True, timeout=10)
+                    self.assertEqual(proc.returncode, 2)
+                    self.assertEqual(proc.stdout, '')
+                    self.assertEqual(proc.stderr, 'observability_configuration_unavailable\n')
 
 
 class RecoveryTransportTests(unittest.TestCase):
