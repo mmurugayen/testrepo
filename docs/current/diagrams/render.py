@@ -125,6 +125,7 @@ def render_containers(spec):
                 start=(ax+aw/2,ay+ah)
                 end=(bx+bw/2,by)
             else:
+                
                 start=(ax+aw/2,ay)
                 end=(bx+bw/2,by+bh)
             points=[start,end]
@@ -149,7 +150,8 @@ def render_containers(spec):
                 yy=ly+j*16
                 parts.append(f'<rect x="{lx-w/2}" y="{yy-12}" width="{w}" height="17" rx="3" fill="#f5f8fc"/>')
                 text(parts,lx-w/2+6,yy,line,12)
-    colors={'process':('#e5f2ee','#24766b'),'store':('#eaf0fb','#4d65a0'),'external':('#f2edf8','#8264a0'),'source':('#fff4e6','#ab7635'),'client':('#eaf2f6','#43728c'),'files':('#edf2f6','#607587')}
+    colors={'process':
+        ('#e5f2ee','#24766b'),'store':('#eaf0fb','#4d65a0'),'external':('#f2edf8','#8264a0'),'source':('#fff4e6','#ab7635'),'client':('#eaf2f6','#43728c'),'files':('#edf2f6','#607587')}
     for n in spec['units']:
         x,y,w,h=positions[n['id']]
         fill,stroke=colors[n['type']]
