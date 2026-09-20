@@ -26,6 +26,10 @@ EXCLUDED_PARTS = {
 }
 TEST_PARTS = {"fixtures", "test", "tests"}
 LOGGER_NAMES = {"LOGGER", "log", "logger"}
+LOG_METHODS = {
+    "debug", "info", "warning", "warn", "error",
+    "exception", "critical", "fatal", "log",
+}
 
 
 def tracked_files() -> list[Path]:
@@ -80,10 +84,19 @@ def is_production_python(path: Path) -> bool:
 
 def has_log_call(node: ast.AST) -> bool:
     """Return whether an AST node includes an accepted logger call."""
-    for child in ast.walk(node):
+    pending = list(ast.iter_child_nodes(node))
+    while pending:
+        child = pending.pop()
+        if isinstance(
+            child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)
+        ):
+            continue
+        pending.extend(ast.iter_child_nodes(child))
         if not isinstance(child, ast.Call):
             continue
         if not isinstance(child.func, ast.Attribute):
+            continue
+        if child.func.attr not in LOG_METHODS:
             continue
         owner = child.func.value
         if isinstance(owner, ast.Name) and owner.id in LOGGER_NAMES:
@@ -139,7 +152,14 @@ def run_optional(
     label: str,
 ) -> list[str]:
     """Run a syntax command for each path when its runtime is installed."""
-    if not paths or shutil.which(command[0]) is None:
+    if not paths:
+        return []
+    if shutil.which(command[0]) is None:
+        print(
+            f"SKIP: {label}: {command[0]} unavailable; "
+            f"{len(paths)} file(s) unverified",
+            file=sys.stderr,
+        )
         return []
     errors: list[str] = []
     for path in paths:
@@ -164,9 +184,7 @@ def validate_files(files: list[Path], changed: set[Path]) -> list[str]:
             if path.suffix == ".py":
                 source = path.read_text(encoding="utf-8")
                 tree = ast.parse(source, filename=str(path))
-                # AST parsing alone accepts invalid control-flow and scope contexts.
-                # Compile without executing code or writing bytecode files.
-                compile(tree, filename=str(path), mode="exec")
+                compile(tree, str(path), "exec")
                 if path in changed and is_production_python(path):
                     errors.extend(logging_errors(path, tree))
             elif path.suffix == ".json":
@@ -185,7 +203,13 @@ def validate_files(files: list[Path], changed: set[Path]) -> list[str]:
 def validate_terraform(files: list[Path]) -> list[str]:
     """Run repository-wide Terraform/OpenTofu formatting when available."""
     formatter = shutil.which("tofu") or shutil.which("terraform")
-    if not formatter or not any(path.suffix == ".tf" for path in files):
+    if not any(path.suffix == ".tf" for path in files):
+        return []
+    if not formatter:
+        print(
+            "SKIP: Terraform/OpenTofu formatting: formatter unavailable; unverified",
+            file=sys.stderr,
+        )
         return []
     result = subprocess.run(
         [formatter, "fmt", "-check", "-recursive"],
@@ -234,7 +258,7 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
-    print("quality gate passed")
+    print("Available quality checks passed; reported SKIPs remain unverified")
     return 0
 
 

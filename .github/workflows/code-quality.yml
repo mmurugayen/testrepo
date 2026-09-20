@@ -25,6 +25,8 @@ jobs:
           python-version: "3.12"
       - name: Install pinned lint tool
         run: python -m pip install "ruff==0.13.1"
+      - name: Test quality gate regressions
+        run: python -m unittest discover -s tests -p test_quality_gate.py
       - name: Run syntax and logging gate
         env:
           QUALITY_BASE_SHA: ${{ github.event.pull_request.base.sha }}
