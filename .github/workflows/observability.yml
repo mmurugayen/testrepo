@@ -31,3 +31,20 @@ jobs:
           if [ -f tests/test_browser_diagnostics.cjs ]; then
             node --test tests/test_browser_diagnostics.cjs
           fi
+  portable-contracts:
+    # Standard hosted Linux runners validate portable source contracts promptly.
+    # Keep the self-hosted diagnostics job above as a separate qualification gate.
+    if: github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Verify source boundaries and shared-source provenance
+        run: python3 scripts/check_observability_coverage.py
+      - name: Exercise all diagnostic contracts
+        run: python3 -m unittest discover -s tests -v
+      - name: Check generated diagrams
+        run: python3 docs/current/diagrams/render.py --check
