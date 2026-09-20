@@ -164,6 +164,9 @@ def validate_files(files: list[Path], changed: set[Path]) -> list[str]:
             if path.suffix == ".py":
                 source = path.read_text(encoding="utf-8")
                 tree = ast.parse(source, filename=str(path))
+                # AST parsing alone accepts invalid control-flow and scope contexts.
+                # Compile without executing code or writing bytecode files.
+                compile(tree, filename=str(path), mode="exec")
                 if path in changed and is_production_python(path):
                     errors.extend(logging_errors(path, tree))
             elif path.suffix == ".json":

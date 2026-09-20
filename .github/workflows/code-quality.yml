@@ -34,5 +34,7 @@ jobs:
           else
             python scripts/quality_gate.py
           fi
+      - name: Test Python syntax gate regressions
+        run: python -m unittest discover -s tests -p "test_quality_gate_syntax.py" -v
       - name: Run repository-wide lint
         run: python -m ruff check . --output-format=github
