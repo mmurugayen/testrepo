@@ -87,8 +87,7 @@ def render(spec):
                 text(parts,lx,ly,line,12)
     for n in spec['nodes']:
         box(parts,*positions[n['id']],n['title'],n.get('detail',[]),fill='#fff2e9' if n.get('warning') else '#ffffff')
-    text(parts,40,height-32,'Lines show structural dependencies
-    boxes identify components and their deployment boundary.' if arch else 'Arrows show order and explicit alternative outcomes. See the guide for command and authority details.',14)
+    text(parts,40,height-32,'Lines show structural dependencies; boxes identify components and their deployment boundary.' if arch else 'Arrows show order and explicit alternative outcomes. See the guide for command and authority details.',14)
     parts.append('</svg>')
     return '\n'.join(parts)+'\n'
 
@@ -174,8 +173,7 @@ def render_containers(spec):
                 yy+=18
             yy+=21
     text(parts,40,height-49,'Containment describes ownership. Connections do not encode execution order. See WORKFLOWS.md for lifecycle decisions.',14)
-    text(parts,40,height-25,spec.get('scope','Source-based architecture
-    site qualification remains separate.'),13,'#496277')
+    text(parts,40,height-25,spec.get('scope','Source-based architecture; site qualification remains separate.'),13,'#496277')
     parts.append('</svg>')
     return '\n'.join(parts)+'\n'
 
