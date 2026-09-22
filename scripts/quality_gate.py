@@ -82,7 +82,7 @@ def is_production_python(path: Path) -> bool:
     )
 
 
-def has_log_call(node: ast.AST) -> bool:
+def has_log_call(node: ast.AST, logger_names: set[str] = LOGGER_NAMES) -> bool:
     """Return whether an AST node includes an accepted logger call."""
     pending = list(ast.iter_child_nodes(node))
     while pending:
@@ -99,10 +99,10 @@ def has_log_call(node: ast.AST) -> bool:
         if child.func.attr not in LOG_METHODS:
             continue
         owner = child.func.value
-        if isinstance(owner, ast.Name) and owner.id in LOGGER_NAMES:
+        if isinstance(owner, ast.Name) and owner.id in logger_names:
             return True
         if isinstance(owner, ast.Attribute):
-            if owner.attr in LOGGER_NAMES:
+            if owner.attr in logger_names:
                 return True
     return False
 
@@ -114,31 +114,93 @@ def assigned_names(node: ast.Assign | ast.AnnAssign) -> list[ast.expr]:
     return [node.target]
 
 
+def module_logger_names(tree: ast.AST) -> set[str]:
+    """Recognize module loggers constructed by imported stdlib factories.
+
+    Track direct module bindings in order so placeholders or reassignment do
+    not qualify. This syntactic evidence does not prove runtime behavior.
+    """
+    bindings: dict[str, str] = {}
+    for node in getattr(tree, "body", []):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                bindings[alias.asname or alias.name] = (
+                    "logging" if alias.name == "logging" else "other"
+                )
+        elif isinstance(node, ast.ImportFrom):
+            for alias in node.names:
+                bindings[alias.asname or alias.name] = (
+                    "factory" if node.module == "logging" and not node.level
+                    and alias.name == "getLogger" else "other"
+                )
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            if node.value is None:
+                continue  # A bare annotation does not create or rebind a value.
+            kind = "other"
+            if isinstance(node.value, ast.Call):
+                factory = node.value.func
+                direct = (
+                    isinstance(factory, ast.Name)
+                    and bindings.get(factory.id) == "factory"
+                )
+                qualified = (
+                    isinstance(factory, ast.Attribute)
+                    and factory.attr == "getLogger"
+                    and isinstance(factory.value, ast.Name)
+                    and bindings.get(factory.value.id) == "logging"
+                )
+                if direct or qualified:
+                    kind = "logger"
+            for target in assigned_names(node):
+                for name in ast.walk(target):
+                    if isinstance(name, ast.Name) and isinstance(name.ctx, ast.Store):
+                        bindings[name.id] = kind if isinstance(target, ast.Name) else "other"
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            bindings[node.name] = "other"
+        elif isinstance(node, ast.Delete):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    bindings.pop(target.id, None)
+    return {name for name in LOGGER_NAMES if bindings.get(name) == "logger"}
+
+
+def nontrivial_callable(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    """Require logging for calls and control flow, including one-line operations."""
+    body = node.body
+    if body and isinstance(body[0], ast.Expr):
+        value = body[0].value
+        if isinstance(value, ast.Constant) and isinstance(value.value, str):
+            body = body[1:]
+    if not body or (len(body) == 1 and isinstance(body[0], ast.Pass)):
+        return False
+    if len(body) > 1:
+        return True
+    statement = body[0]
+    if isinstance(statement, (ast.Return, ast.Assign, ast.AnnAssign, ast.Expr)):
+        return any(
+            isinstance(child, (ast.Call, ast.Await, ast.Yield, ast.YieldFrom, ast.NamedExpr))
+            for child in ast.walk(statement)
+        )
+    return True
+
+
 def logging_errors(path: Path, tree: ast.AST) -> list[str]:
     """Return changed-code logging violations for one Python module."""
     errors: list[str] = []
-    body = getattr(tree, "body", [])
-    has_module_logger = any(
-        isinstance(node, (ast.Assign, ast.AnnAssign))
-        and any(
-            isinstance(target, ast.Name) and target.id in LOGGER_NAMES
-            for target in assigned_names(node)
-        )
-        for node in body
-    )
+    logger_names = module_logger_names(tree)
     public = [
         node
         for node in ast.walk(tree)
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
         and not node.name.startswith("_")
-        and len(node.body) > 1
+        and nontrivial_callable(node)
     ]
-    if public and not has_module_logger:
+    if public and not logger_names:
         errors.append(
             f"{path}: module has public functionality but no module logger"
         )
     for node in public:
-        if not has_log_call(node):
+        if not has_log_call(node, logger_names):
             errors.append(
                 f"{path}:{node.lineno}: public callable "
                 f"{node.name!r} has no log outcome"

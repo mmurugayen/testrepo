@@ -42,3 +42,61 @@ class QualityGateTests(unittest.TestCase):
             self.assertEqual(GATE.run_optional(["node", "--check"], [], "JavaScript syntax"), [])
             self.assertEqual(GATE.validate_terraform([]), [])
         self.assertEqual(stream.getvalue(), "")
+
+
+class LoggingContractRegressionTests(unittest.TestCase):
+    def errors(self, source):
+        return GATE.logging_errors(Path("implementation.py"), ast.parse(source))
+
+    def test_placeholder_assignments_do_not_satisfy_module_logger(self):
+        operation = "def operation():\n    logger.info('completed')\n    return 1\n"
+        for assignment in (
+            "logger = None", "logger = 0", "logger = 'fake'",
+            "logger: object", "logger = object()",
+            "logger = fake.getLogger(__name__)",
+            "import logging\nlogger = logging.getLogger(__name__)\nlogger = None",
+        ):
+            with self.subTest(assignment=assignment):
+                self.assertTrue(any("no module logger" in error for error in
+                                    self.errors(assignment + "\n" + operation)))
+
+    def test_imported_logger_factories_and_aliases_are_supported(self):
+        operation = "def operation():\n    logger.info('completed')\n    return 1\n"
+        for assignment in (
+            "import logging\nlogger = logging.getLogger(__name__)",
+            "import logging as diag\nlogger = diag.getLogger(__name__)",
+            "from logging import getLogger\nlogger = getLogger(__name__)",
+            "from logging import getLogger as get_logger\nlogger = get_logger(__name__)",
+            "import logging\nlogger: logging.Logger = logging.getLogger(__name__)",
+        ):
+            with self.subTest(assignment=assignment):
+                self.assertEqual(self.errors(assignment + "\n" + operation), [])
+
+    def test_single_statement_operations_require_outcome_logging(self):
+        prefix = "import logging\nlogger = logging.getLogger(__name__)\n"
+        for operation in (
+            "def save():\n    database.commit()\n",
+            "def save():\n    return database.commit()\n",
+            "async def save():\n    await database.commit()\n",
+            "def save():\n    if ready:\n        database.commit()\n",
+            "def save():\n    for item in items:\n        database.write(item)\n",
+        ):
+            with self.subTest(operation=operation):
+                self.assertTrue(any("has no log outcome" in error for error in
+                                    self.errors(prefix + operation)))
+
+    def test_trivial_pure_helpers_do_not_require_noisy_logging(self):
+        for operation in (
+            "def value():\n    return 1\n",
+            "def value():\n    return self.value\n",
+            "def value():\n    return x + 1\n",
+            "def value():\n    'Pure getter.'\n    return self.value\n",
+        ):
+            with self.subTest(operation=operation):
+                self.assertEqual(self.errors(operation), [])
+
+    def test_single_statement_real_emission_satisfies_logging(self):
+        self.assertEqual(self.errors(
+            "import logging\nlogger = logging.getLogger(__name__)\n"
+            "def report():\n    logger.info('completed')\n"
+        ), [])

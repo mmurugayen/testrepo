@@ -17,6 +17,8 @@ Every functional boundary must emit structured, actionable diagnostics:
 
 Library-style pure helpers may avoid noisy entry/exit messages, but the public functionality that invokes them must log the observable outcome. New or modified nontrivial public Python callables are checked automatically.
 
+The Python gate recognizes module loggers created with an imported `logging.getLogger` factory, including import aliases. Placeholders, bare annotations, unrelated factories and direct reassignment do not count as logger initialization. A single statement containing a call, await, yield or control flow is nontrivial; a simple pure getter remains exempt, with or without a docstring. These are conservative source checks, not proof that every runtime path emits a terminal outcome; dynamic bindings and custom logger factories require separate review.
+
 ## Required checks
 
 Every implementation change must pass all applicable checks:
