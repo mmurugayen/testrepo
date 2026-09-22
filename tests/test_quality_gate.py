@@ -80,6 +80,10 @@ class LoggingContractRegressionTests(unittest.TestCase):
             "async def save():\n    await database.commit()\n",
             "def save():\n    if ready:\n        database.commit()\n",
             "def save():\n    for item in items:\n        database.write(item)\n",
+            "def save(self, value):\n    self.value = value\n",
+            "def save(self, value):\n    self.value: object = value\n",
+            "def save(self, key, value):\n    self.values[key] = value\n",
+            "def save(self, value):\n    self.value, local = value, 1\n",
         ):
             with self.subTest(operation=operation):
                 self.assertTrue(any("has no log outcome" in error for error in

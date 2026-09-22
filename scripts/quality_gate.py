@@ -176,6 +176,12 @@ def nontrivial_callable(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     if len(body) > 1:
         return True
     statement = body[0]
+    if isinstance(statement, (ast.Assign, ast.AnnAssign)) and statement.value is not None:
+        # Attribute and subscript writes change caller-visible state, even when
+        # no function call appears in the assigned value.
+        if any(isinstance(child, (ast.Attribute, ast.Subscript))
+               for target in assigned_names(statement) for child in ast.walk(target)):
+            return True
     if isinstance(statement, (ast.Return, ast.Assign, ast.AnnAssign, ast.Expr)):
         return any(
             isinstance(child, (ast.Call, ast.Await, ast.Yield, ast.YieldFrom, ast.NamedExpr))
