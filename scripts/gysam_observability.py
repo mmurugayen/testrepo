@@ -26,6 +26,8 @@ MAX_MESSAGE = 262144
 MAX_LINE = 16384
 MAX_SOURCE_BYTES = 2 * 1024 * 1024
 PROTOCOLS = ('2025-11-25', '2025-06-18', '2025-03-26')
+PLAN_STATES = frozenset(('planned', 'approved', 'applying', 'simulated', 'verified',
+    'verification_required', 'failed', 'uncertain', 'rollback_requested'))
 
 
 def strict_json(raw):
@@ -318,6 +320,9 @@ class ObservabilityMCP:
             if not IDENTITY.fullmatch(plan_id):
                 raise ValueError('invalid_plan_id')
             plan = self.backend.call('GET', 'automation/plans/' + plan_id)
+            if (plan.get('id') != plan_id or not isinstance(plan.get('state'), str)
+                    or plan['state'] not in PLAN_STATES):
+                raise ValueError('invalid_backend_response')
             if plan.get('target') not in self.config.get('targets', {}).values():
                 raise ValueError('plan_target_not_configured')
             if plan.get('state') != 'approved':
@@ -325,7 +330,12 @@ class ObservabilityMCP:
                         'reason': 'approved_plan_required'}
             result = self.backend.call('POST', 'automation/plans/' + plan_id + '/apply', {})
             plan_result = result.get('plan')
-            if not isinstance(plan_result, dict) or not isinstance(plan_result.get('state'), str):
+            # A valid response for a different plan/target is not this action's
+            # receipt. Preserve uncertainty after dispatch; never replay it.
+            if (not isinstance(plan_result, dict) or plan_result.get('id') != plan_id
+                    or plan_result.get('target') != plan['target']
+                    or not isinstance(plan_result.get('state'), str)
+                    or plan_result['state'] not in PLAN_STATES):
                 raise ValueError('backend_outcome_unknown')
             state = plan_result['state']
             return {'plan_id': plan_id, 'state': state, 'verified': state == 'verified',
