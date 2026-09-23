@@ -11,10 +11,6 @@
     "Operator-only build/deployment scripts retain their existing exit/output contract"
   ],
   "files": {
-    "newtestrepo/main.java": {
-      "boundary": "Empty Java placeholder; no executable implementation exists",
-      "direct_markers": []
-    },
     "scripts/check_observability_coverage.py": {
       "boundary": "MCP protocol; no existing application runtime",
       "direct_markers": []
