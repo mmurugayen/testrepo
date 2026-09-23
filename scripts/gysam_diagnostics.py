@@ -26,6 +26,8 @@ _FIELDS = frozenset(('component', 'operation', 'outcome', 'reason', 'request_id'
     'duration_ms', 'count', 'exit_code', 'method', 'span_id', 'parent_span_id', 'plan_id'))
 _CONTEXT = ContextVar('gysam_diagnostic_context', default=None)
 _CONFIG_LOCK = RLock()
+# Exact in JSON consumers and bounded by the diagnostic scalar contract.
+_COUNTER_LIMIT = 2**53 - 1
 _REVISION = os.environ.get('GYSAM_REVISION') or os.environ.get('GITHUB_SHA', '')
 _REVISION = _REVISION.lower() if re.fullmatch(r'[A-Fa-f0-9]{40}', _REVISION) else None
 # Never include tenant/site names, URLs or arbitrary environment values.
@@ -71,13 +73,49 @@ def log_context(**fields):
 
 
 class _StderrHandler(logging.Handler):
-    """Logging sink failures cannot change an operation's outcome."""
+    """Report interrupted writes on recovery without buffering or replaying events."""
+    def __init__(self, service):
+        super().__init__()
+        self.service = service
+        # Handler.handle serializes emit calls. Saturate rather than retaining
+        # failed records, scope identifiers, exceptions or an unbounded counter.
+        self.failed_attempts = 0
+
+    @staticmethod
+    def _write(stream, text):
+        written = stream.write(text)
+        if type(written) is not int or written != len(text):
+            raise OSError('diagnostic_short_write')
+        stream.flush()
+
     def emit(self, record):
         try:
-            sys.stderr.write(record.getMessage() + '\n')
-            sys.stderr.flush()
+            stream = sys.stderr
+            if self.failed_attempts:
+                recovery = {
+                    'schema_version': 1,
+                    'timestamp': datetime.now(timezone.utc).isoformat(timespec='milliseconds'),
+                    'level': 'WARNING', 'service': self.service,
+                    'event': 'diagnostic.sink.recovered', 'run_id': _RUN_ID,
+                    'count': self.failed_attempts,
+                    'reason': 'interrupted_record_attempts',
+                }
+                if _REVISION:
+                    recovery['revision'] = _REVISION
+                # A prior short write may have left a partial JSON line. Keep
+                # the recovery marker parseable without replaying that record.
+                self._write(stream, '\n' + json.dumps(recovery, separators=(',', ':')) + '\n')
+                self.failed_attempts = 0
+            self._write(stream, record.getMessage() + '\n')
         except Exception:
-            pass
+            # A failed flush has ambiguous delivery; this is an interrupted
+            # attempt count, never a claim that exactly this many logs were lost.
+            self.failed_attempts = min(self.failed_attempts + 1, _COUNTER_LIMIT)
+
+
+# All built-in diagnostic loggers write to the same stream. Share its handler
+# lock and failure interval so recovery also frames a different service's event.
+_STDERR_HANDLER = _StderrHandler('gysam-diagnostics')
 
 
 @lru_cache(maxsize=32)
@@ -85,7 +123,7 @@ def _logger(service, logger_name=None):
     with _CONFIG_LOCK:
         logger = logging.getLogger(logger_name or ('gysam.diagnostics.' + service))
         if not logger.handlers:
-            logger.addHandler(_StderrHandler())
+            logger.addHandler(_STDERR_HANDLER)
         logger.propagate = False
         # Invalid levels fall back to INFO. Do not reconfigure application/root logs.
         level = os.environ.get('GYSAM_LOG_LEVEL', 'INFO').upper()
@@ -224,40 +262,56 @@ def observe(service):
         component = function.__module__
         operation = function.__qualname__.replace('<', '').replace('>', '')
 
-        @contextmanager
-        def span():
-            parent = current_context().get('span_id')
+        def start_span():
+            # Existing context has already passed log_context's field filter.
+            # Copy once: never mutate the dictionary inherited by another task.
+            context = current_context()
+            parent = context.get('span_id')
             started = monotonic()
-            with log_context(span_id=uuid4().hex, parent_span_id=parent):
-                try:
-                    yield
-                except BaseException as exc:
-                    emit(service, 'operation.failed', level='ERROR', error=exc,
-                         component=component, operation=operation,
-                         duration_ms=(monotonic() - started) * 1000)
-                    raise
-                else:
-                    elapsed = (monotonic() - started) * 1000
-                    emit(service, 'operation.completed', level='WARNING' if elapsed >= 1000 else 'DEBUG',
-                         component=component, operation=operation, duration_ms=elapsed)
+            context['span_id'] = uuid4().hex
+            if parent is not None:
+                context['parent_span_id'] = parent
+            return started, _CONTEXT.set(context)
 
-        def result_value(result):
-            # Registered adapters also report failure through an explicit ok flag.
-            if type(result) is dict and result.get("ok") is False:
-                emit(service, "operation.failed", level="ERROR", reason="unsuccessful_result",
-                     component=component, operation=operation)
+        def failed(error, started):
+            emit(service, 'operation.failed', level='ERROR', error=error,
+                 component=component, operation=operation,
+                 outcome='interrupted' if not isinstance(error, Exception) else 'failed',
+                 duration_ms=(monotonic() - started) * 1000)
+
+        def result_value(result, started):
+            # One terminal event per boundary, including a slow returned failure.
+            elapsed = (monotonic() - started) * 1000
+            if type(result) is dict and result.get('ok') is False:
+                emit(service, 'operation.failed', level='ERROR', reason='unsuccessful_result',
+                     component=component, operation=operation, outcome='failed', duration_ms=elapsed)
+            else:
+                emit(service, 'operation.completed', level='WARNING' if elapsed >= 1000 else 'DEBUG',
+                     component=component, operation=operation, outcome='completed', duration_ms=elapsed)
             return result
 
         if inspect.iscoroutinefunction(function):
             @wraps(function)
             async def wrapped(*args, **kwargs):
-                with span():
-                    return result_value(await function(*args, **kwargs))
+                started, token = start_span()
+                try:
+                    return result_value(await function(*args, **kwargs), started)
+                except BaseException as exc:
+                    failed(exc, started)
+                    raise
+                finally:
+                    _CONTEXT.reset(token)
         else:
             @wraps(function)
             def wrapped(*args, **kwargs):
-                with span():
-                    return result_value(function(*args, **kwargs))
+                started, token = start_span()
+                try:
+                    return result_value(function(*args, **kwargs), started)
+                except BaseException as exc:
+                    failed(exc, started)
+                    raise
+                finally:
+                    _CONTEXT.reset(token)
         wrapped._gysam_observed = True
         return wrapped
     return decorate

@@ -4,12 +4,16 @@
   "canonical_repository": "mmurugayen/gysam-platform",
   "update_policy": "Review canonical changes, copy verbatim and refresh hashes together.",
   "sha256": {
-    "scripts/gysam_observability.py": "e54acf4dd3cb092127798be519c4faeb081d86801aacb5d162309d3893edfde9",
+    "scripts/gysam_observability.py": "17750e03a9a5f37e69966fd7170d8e525d339abbbe5e9f68ecf8d5dceb30a7fc",
     "scripts/gysam_diagnostic_contract.py": "595410bf5d6487dc57591f2b55d61518a8da8eea9bd48473c99d7074b0d71fce",
-    "scripts/gysam_diagnostics.py": "dfd8e93f748c970a4c7914d31070b73e579d30b0356efbb2e4b347f3aaba377c",
+    "scripts/gysam_diagnostics.py": "fd89621fd01b6c47e40e0c2cfb96ef8da114009d39091acab8af640c0a2777fc",
     "scripts/check_observability_coverage.py": "f1a3ae1247f049163b6e090c77e651811941f51abc99f96bb139e04654ef4ed1",
-    "tests/test_observability_mcp.py": "80b5d19226d32f23ce6df4010fc62d29010a361f760217f2388a810d70e158ed",
-    "tests/test_operation_tracing.py": "071a47e456efb69da90511a31eb9753c1124559e844f9c48927841d5f45b5974"
+    "tests/test_observability_mcp.py": "46b9a1ff500948f9e9d771944cc0a18d2eaff8c3986763b2e4cb6b7b1c2f6eb5",
+    "tests/test_operation_tracing.py": "071a47e456efb69da90511a31eb9753c1124559e844f9c48927841d5f45b5974",
+    "tests/test_operation_outcomes.py": "d47e7f83109edb2a4490960133e2e3e5fdd556c5e11e9caef92877554c26c859",
+    "tests/test_operation_span_contract.py": "c8f70a88995032ef78110118440ec9794bbf86f69b13e145e760ed8616b08aa5",
+    "tests/test_recovery_identity.py": "d6c0c5e97daae89004cb0bc3b8b1ed6c0fb80cda0ac213d76e6ae4de43efc96f",
+    "tests/test_diagnostic_sink_recovery.py": "5fa9c3b2172d46e7d2aa020e4b53737fd40704b11d0127f1aeb2ce865235c9b2"
   },
   "backend_response_integrity_review": {
     "date": "2026-09-16",
@@ -20,5 +24,21 @@
     "acceptance": "Source correction only; current CI and installed-target qualification remain required.",
     "canonical_commit": "94dc29c50d0ed06a641822661c95253832ef87a3",
     "canonical_pull_request": "https://github.com/mmurugayen/gysam-platform/pull/33"
+  },
+  "recovery_and_terminal_outcome_review": {
+    "date": "2026-09-17",
+    "canonical_repository": "mmurugayen/gysam-platform",
+    "canonical_commit": "774cb71a9e6856249c2c5386331103c1b16ef2e4",
+    "copied_verbatim": [
+      "scripts/gysam_diagnostics.py",
+      "scripts/gysam_observability.py",
+      "tests/test_diagnostic_sink_recovery.py",
+      "tests/test_observability_mcp.py",
+      "tests/test_operation_outcomes.py",
+      "tests/test_operation_span_contract.py",
+      "tests/test_recovery_identity.py"
+    ],
+    "scope": "Bind recovery receipts to the requested plan and target; emit one timed terminal outcome; recover bounded shared stderr interruptions without replay.",
+    "qualification": "Local source tests only; required candidate CI, reviews and installed collector/backend qualification remain open."
   }
 }

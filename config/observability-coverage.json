@@ -5,10 +5,6 @@
     {
       "root": "scripts",
       "boundary": "MCP protocol; no existing application runtime"
-    },
-    {
-      "root": "newtestrepo",
-      "boundary": "Empty Java placeholder; no executable implementation exists"
     }
   ],
   "markers": [

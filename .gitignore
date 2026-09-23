@@ -3,3 +3,28 @@ __pycache__/
 .pytest_cache/
 .venv/
 logs/
+
+# Python caches and local environments
+.mypy_cache/
+.ruff_cache/
+venv/
+
+# Local test coverage
+.coverage
+.coverage.*
+/htmlcov/
+
+# Local environment configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+!.env.template
+
+# Editor recovery and operating-system files
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
