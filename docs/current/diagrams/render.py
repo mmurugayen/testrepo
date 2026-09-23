@@ -1,28 +1,35 @@
 #!/usr/bin/env python3
 """Render the adjacent diagrams.json to standalone accessible SVGs (stdlib only)."""
 import json
+import logging
 from html import escape
 from pathlib import Path
 import textwrap
 
 ROOT = Path(__file__).resolve().parent
+logger = logging.getLogger(__name__)
 
 def text(parts, x, y, value, size=16, color='#23384d', weight=400):
+    logger.debug("rendering text element")
     parts.append(f'<text x="{x}" y="{y}" font-family="Arial, sans-serif" font-size="{size}" font-weight="{weight}" fill="{color}">{escape(str(value))}</text>')
 
 def box(parts,x,y,w,h,title,detail,fill='#ffffff',stroke='#91a7ba'):
+    logger.debug("rendering diagram box")
     parts.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="12" fill="{fill}" stroke="{stroke}" stroke-width="1.5"/>')
     title_lines=textwrap.wrap(title,width=max(18,int((w-36)/10)))
     yy=y+29
     for line in title_lines:
-        text(parts,x+18,yy,line,18,weight=700);yy+=23
+        text(parts,x+18,yy,line,18,weight=700)
+        yy+=23
     for line in detail:
         for row in textwrap.wrap(line,width=max(20,int((w-36)/7.3))):
-            text(parts,x+18,yy+8,row,14,color='#496277');yy+=20
+            text(parts,x+18,yy+8,row,14,color='#496277')
+            yy+=20
     if yy+8 > y+h-8:
         raise ValueError('Text exceeds box: '+title)
 
 def render(spec):
+    logger.debug("rendering diagram")
     if "units" in spec:
         return render_containers(spec)
     arch=spec['kind']=='architecture'
@@ -47,13 +54,22 @@ def render(spec):
     # Render associations under boxes. Architecture has no arrowheads or temporal sequence.
     for e in spec['edges']:
         a,b=positions[e['from']],positions[e['to']]
-        ax,ay,aw,ah=a;bx,by,bw,bh=b
+        ax,ay,aw,ah=a
+        bx,by,bw,bh=b
         if ax==bx:
-            x1=x2=ax+aw/2;y1=ay+ah if by>ay else ay;y2=by if by>ay else by+bh
+            x1=x2=ax+aw/2
+            y1=ay+ah if by>ay else ay
+            y2=by if by>ay else by+bh
         elif bx>ax:
-            x1=ax+aw;y1=ay+ah/2;x2=bx;y2=by+bh/2
+            x1=ax+aw
+            y1=ay+ah/2
+            x2=bx
+            y2=by+bh/2
         else:
-            x1=ax;y1=ay+ah/2;x2=bx+bw;y2=by+bh/2
+            x1=ax
+            y1=ay+ah/2
+            x2=bx+bw
+            y2=by+bh/2
         points=e.get('points',[[x1,y1],[x2,y2]])
         if arch and ax==bx and abs(by-ay)>210 and 'points' not in e:
             lane=ax+aw+12
@@ -77,8 +93,10 @@ def render(spec):
 
 def render_containers(spec):
     """Render structural containment and associations, without execution ordering."""
+    logger.debug("rendering container diagram")
     rows=max(n['row'] for n in spec['units'])+1
-    width=1400; height=195+rows*310+65
+    width=1400
+    height=195+rows*310+65
     parts=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">',
            f'<title id="title">{escape(spec["title"])}</title>',f'<desc id="desc">{escape(spec["description"])}</desc>',
            f'<rect width="{width}" height="{height}" fill="#f5f8fc"/>']
@@ -90,15 +108,29 @@ def render_containers(spec):
     positions={n['id']:(45+460*n['col'],195+310*n['row'],390,240) for n in spec['units']}
     # Associations use the free lanes between deployment units. No arrowheads.
     for i,e in enumerate(spec['edges']):
-        ax,ay,aw,ah=positions[e['from']];bx,by,bw,bh=positions[e['to']]
+        ax,ay,aw,ah=positions[e['from']]
+        bx,by,bw,bh=positions[e['to']]
         if ay==by:
-            if ax<bx: start=(ax+aw,ay+ah/2);end=(bx,by+bh/2)
-            else:start=(ax,ay+ah/2);end=(bx+bw,by+bh/2)
-            points=[start,end];lx=(start[0]+end[0])/2;ly=start[1]-12
+            if ax<bx:
+                start=(ax+aw,ay+ah/2)
+                end=(bx,by+bh/2)
+            else:
+                start=(ax,ay+ah/2)
+                end=(bx+bw,by+bh/2)
+            points=[start,end]
+            lx=(start[0]+end[0])/2
+            ly=start[1]-12
         elif ax==bx:
-            if ay<by:start=(ax+aw/2,ay+ah);end=(bx+bw/2,by)
-            else:start=(ax+aw/2,ay);end=(bx+bw/2,by+bh)
-            points=[start,end];lx=start[0]+10;ly=(start[1]+end[1])/2
+            if ay<by:
+                start=(ax+aw/2,ay+ah)
+                end=(bx+bw/2,by)
+            else:
+                
+                start=(ax+aw/2,ay)
+                end=(bx+bw/2,by+bh)
+            points=[start,end]
+            lx=start[0]+10
+            ly=(start[1]+end[1])/2
         else:
             # A diagonal association exits via a side gutter and joins the target
             # from its top/bottom. This prevents drawing through contained text.
@@ -107,31 +139,40 @@ def render_containers(spec):
             end=(bx+bw/2,by if by>ay else by+bh)
             gutter=by-28 if by>ay else by+bh+28
             points=[start,(lane,start[1]),(lane,gutter),(end[0],gutter),end]
-            lx=(lane+end[0])/2;ly=gutter-8
+            lx=(lane+end[0])/2
+            ly=gutter-8
         dashed=' stroke-dasharray="6 4"' if e.get('dependency') else ''
         parts.append('<polyline points="'+' '.join(f'{x},{y}' for x,y in points)+f'" fill="none" stroke="#527085" stroke-width="2"{dashed}/>')
         label=e.get('label','')
         if label:
             for j,line in enumerate(textwrap.wrap(label,12)):
-                w=len(line)*6.5+12;yy=ly+j*16
+                w=len(line)*6.5+12
+                yy=ly+j*16
                 parts.append(f'<rect x="{lx-w/2}" y="{yy-12}" width="{w}" height="17" rx="3" fill="#f5f8fc"/>')
                 text(parts,lx-w/2+6,yy,line,12)
-    colors={'process':('#e5f2ee','#24766b'),'store':('#eaf0fb','#4d65a0'),'external':('#f2edf8','#8264a0'),'source':('#fff4e6','#ab7635'),'client':('#eaf2f6','#43728c'),'files':('#edf2f6','#607587')}
+    colors={'process':
+        ('#e5f2ee','#24766b'),'store':('#eaf0fb','#4d65a0'),'external':('#f2edf8','#8264a0'),'source':('#fff4e6','#ab7635'),'client':('#eaf2f6','#43728c'),'files':('#edf2f6','#607587')}
     for n in spec['units']:
-        x,y,w,h=positions[n['id']];fill,stroke=colors[n['type']]
+        x,y,w,h=positions[n['id']]
+        fill,stroke=colors[n['type']]
         dash=' stroke-dasharray="7 4"' if n['type']=='source' else ''
         parts.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="12" fill="{fill}" stroke="{stroke}" stroke-width="1.6"{dash}/>')
         text(parts,x+18,y+24,n['boundary'].upper(),11,stroke,700)
         title=textwrap.wrap(n['title'],32)
         yy=y+52
-        for line in title:text(parts,x+18,yy,line,19,weight=700);yy+=23
+        for line in title:
+            text(parts,x+18,yy,line,19,weight=700)
+            yy+=23
         yy=max(yy+4,y+85)
         for item in n['components']:
             lines=textwrap.wrap(item,45)
             hh=15+18*len(lines)
-            if yy+hh>y+h-12: raise ValueError('Container overflow: '+n['title'])
+            if yy+hh>y+h-12:
+                raise ValueError('Container overflow: '+n['title'])
             parts.append(f'<rect x="{x+12}" y="{yy-1}" width="{w-24}" height="{hh}" rx="5" fill="#ffffff" stroke="#cfdae2"/>')
-            for line in lines:text(parts,x+24,yy+18,line,14);yy+=18
+            for line in lines:
+                text(parts,x+24,yy+18,line,14)
+                yy+=18
             yy+=21
     text(parts,40,height-49,'Containment describes ownership. Connections do not encode execution order. See WORKFLOWS.md for lifecycle decisions.',14)
     text(parts,40,height-25,spec.get('scope','Source-based architecture; site qualification remains separate.'),13,'#496277')
@@ -149,7 +190,8 @@ if __name__=='__main__':
         target=ROOT/(spec['id']+'.svg')
         expected=render(spec)
         if args.check:
-            if not target.exists() or target.read_text()!=expected: stale.append(target.name)
+            if not target.exists() or target.read_text()!=expected:
+                stale.append(target.name)
         else:
             target.write_text(expected)
     if stale:
