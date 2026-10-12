@@ -1,0 +1,21 @@
+name: Quality gate timeout regression
+on:
+  pull_request:
+    paths:
+      - 'scripts/quality_gate.py'
+      - 'tests/test_quality_gate_timeouts.py'
+      - '.github/workflows/quality-gate-timeouts.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  timeout-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run bounded optional syntax-check tests
+        run: python -m unittest discover -s tests -p 'test_quality_gate_timeouts.py' -v
