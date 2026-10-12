@@ -36,6 +36,15 @@ class OptionalChecksTests(unittest.TestCase):
             errors = gate.run_optional(["bash", "-n"], [Path("check.sh")], "bash syntax")
         self.assertLess(len(errors[0]), 2200)
 
+    def test_terraform_formatter_timeout(self):
+        with patch.object(gate.shutil, "which", side_effect=lambda name: "/usr/bin/terraform" if name == "terraform" else None), patch.object(
+            gate.subprocess, "run", side_effect=subprocess.TimeoutExpired(["terraform"], 120)
+        ) as call:
+            errors = gate.validate_terraform([Path("main.tf")])
+        self.assertIn("timed out", errors[0])
+        self.assertEqual(call.call_args.kwargs["timeout"], 120)
+
+
 
 if __name__ == "__main__":
     unittest.main()
