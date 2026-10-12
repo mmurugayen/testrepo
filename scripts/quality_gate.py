@@ -287,13 +287,19 @@ def validate_terraform(files: list[Path]) -> list[str]:
             file=sys.stderr,
         )
         return []
-    result = subprocess.run(
-        [formatter, "fmt", "-check", "-recursive"],
-        capture_output=True,
-        text=True,
-    )
+    try:
+        result = subprocess.run(
+            [formatter, "fmt", "-check", "-recursive"],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+    except subprocess.TimeoutExpired:
+        return ["Terraform/OpenTofu formatting timed out"]
+    except OSError:
+        return ["Terraform/OpenTofu formatter execution failed"]
     if result.returncode:
-        detail = (result.stdout or result.stderr).strip()
+        detail = (result.stdout or result.stderr).strip()[:2048]
         return [f"Terraform/OpenTofu formatting failed: {detail}"]
     return []
 
