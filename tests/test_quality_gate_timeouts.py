@@ -45,6 +45,13 @@ class OptionalChecksTests(unittest.TestCase):
         self.assertEqual(call.call_args.kwargs["timeout"], 120)
 
 
+    def test_successful_optional_check(self):
+        result = subprocess.CompletedProcess(["bash"], 0, "", "")
+        with patch.object(gate.shutil, "which", return_value="/bin/bash"), patch.object(
+            gate.subprocess, "run", return_value=result
+        ):
+            self.assertEqual(gate.run_optional(["bash", "-n"], [Path("ok.sh")], "bash syntax"), [])
+
 
 if __name__ == "__main__":
     unittest.main()
