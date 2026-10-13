@@ -231,13 +231,21 @@ def run_optional(
         return []
     errors: list[str] = []
     for path in paths:
-        result = subprocess.run(
-            [*command, str(path)],
-            capture_output=True,
-            text=True,
-        )
+        try:
+            result = subprocess.run(
+                [*command, str(path)],
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+        except subprocess.TimeoutExpired:
+            errors.append(f"{label} timed out for {path}")
+            continue
+        except OSError:
+            errors.append(f"{label} unavailable for {path}")
+            continue
         if result.returncode:
-            detail = (result.stderr or result.stdout).strip()
+            detail = (result.stderr or result.stdout)[:4096].strip()
             errors.append(f"{label} failed for {path}: {detail}")
     return errors
 
