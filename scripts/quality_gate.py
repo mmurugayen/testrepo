@@ -43,7 +43,7 @@ def tracked_files() -> list[Path]:
     for item in result.stdout.split(b"\0"):
         if not item:
             continue
-        path = Path(item.decode())
+        path = Path(item.decode("utf-8", errors="surrogateescape"))
         if not any(part in EXCLUDED_PARTS for part in path.parts):
             paths.append(path)
     return paths
