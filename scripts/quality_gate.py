@@ -58,18 +58,18 @@ def changed_files(base: str | None, files: list[Path]) -> set[Path]:
             "git",
             "diff",
             "--name-only",
+            "-z",
             "--diff-filter=ACMR",
             f"{base}...HEAD",
         ],
         check=True,
         capture_output=True,
-        text=True,
     )
     tracked = set(files)
     return {
-        Path(line)
-        for line in result.stdout.splitlines()
-        if Path(line) in tracked
+        Path(line.decode("utf-8", errors="surrogateescape"))
+        for line in result.stdout.split(b"\0")
+        if Path(line.decode("utf-8", errors="surrogateescape")) in tracked
     }
 
 
