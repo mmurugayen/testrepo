@@ -65,7 +65,9 @@ class LogReader:
     def __init__(self, sources):
         if not isinstance(sources, list) or len(sources) > 8:
             raise ValueError('source_limit')
-        self.sources = sources
+        if any(not isinstance(source, dict) for source in sources):
+            raise ValueError('invalid_log_source')
+        self.sources = [dict(source) for source in sources]
 
     def read(self, selector=None, value=None, service=None, limit=100):
         if selector is not None and (selector not in SELECTORS or not isinstance(value, str) or not IDENTITY.fullmatch(value)):
