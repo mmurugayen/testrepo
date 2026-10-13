@@ -22,6 +22,14 @@ Backend, LogReader, ObservabilityMCP = adapter.Backend, adapter.LogReader, adapt
 load_config, strict_json = adapter.load_config, adapter.strict_json
 
 
+class LogSelectorTypeTests(unittest.TestCase):
+    def test_non_string_selector_returns_stable_error(self):
+        reader = LogReader([])
+        for selector in ([], {}, 123):
+            with self.subTest(selector=selector), self.assertRaisesRegex(ValueError, 'invalid_selector'):
+                reader.read(selector=selector, value='safe')
+
+
 def event(**fields):
     return {'schema_version': 1, 'timestamp': '2026-09-14T00:00:00+00:00',
             'service': 'gysam-platform', 'event': 'operation.failed', 'level': 'ERROR',
