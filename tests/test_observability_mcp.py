@@ -22,6 +22,19 @@ Backend, LogReader, ObservabilityMCP = adapter.Backend, adapter.LogReader, adapt
 load_config, strict_json = adapter.load_config, adapter.strict_json
 
 
+class LogSourceSnapshotTests(unittest.TestCase):
+    def test_invalid_source_items_are_rejected(self):
+        for source in (None, "path", 123, []):
+            with self.subTest(source=source), self.assertRaisesRegex(ValueError, 'invalid_log_source'):
+                LogReader([source])
+
+    def test_source_configuration_is_snapshotted(self):
+        source = {'id': 'audit', 'path': '/tmp/original'}
+        reader = LogReader([source])
+        source['path'] = '/tmp/changed'
+        self.assertEqual(reader.sources[0]['path'], '/tmp/original')
+
+
 def event(**fields):
     return {'schema_version': 1, 'timestamp': '2026-09-14T00:00:00+00:00',
             'service': 'gysam-platform', 'event': 'operation.failed', 'level': 'ERROR',
