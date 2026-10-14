@@ -4,7 +4,7 @@
   "canonical_repository": "mmurugayen/gysam-platform",
   "update_policy": "Review canonical changes, copy verbatim and refresh hashes together.",
   "sha256": {
-    "scripts/gysam_observability.py": "17750e03a9a5f37e69966fd7170d8e525d339abbbe5e9f68ecf8d5dceb30a7fc",
+    "scripts/gysam_observability.py": "fdf37cd91c90b7fccd0288324f6bdf93ef00c49354474ba3d18d10f0ff3457f7",
     "scripts/gysam_diagnostic_contract.py": "595410bf5d6487dc57591f2b55d61518a8da8eea9bd48473c99d7074b0d71fce",
     "scripts/gysam_diagnostics.py": "fd89621fd01b6c47e40e0c2cfb96ef8da114009d39091acab8af640c0a2777fc",
     "scripts/check_observability_coverage.py": "f1a3ae1247f049163b6e090c77e651811941f51abc99f96bb139e04654ef4ed1",
@@ -40,5 +40,15 @@
     ],
     "scope": "Bind recovery receipts to the requested plan and target; emit one timed terminal outcome; recover bounded shared stderr interruptions without replay.",
     "qualification": "Local source tests only; required candidate CI, reviews and installed collector/backend qualification remain open."
+  },
+  "source_validation_review": {
+    "date": "2026-10-14",
+    "scope": "Reviewed the selector string guard, source mapping validation and shallow source snapshot changes against the prior pinned source. These same guards exist in canonical platform source; no wholesale canonical version synchronization is claimed.",
+    "canonical_reference": "mmurugayen/gysam-platform@8ec3f478bf31d6a5c1b8410bb526848e1f9e570e",
+    "tests": [
+      "tests/test_observability_selector_rebased.py",
+      "tests/test_observability_sources_rebased.py"
+    ],
+    "validation": "Full local unittest discovery passed. Remote CI remains required."
   }
 }
